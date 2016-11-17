@@ -102,6 +102,7 @@ function wepsets.mainMenu( list, options )
     bt3.DoClick = function()
         Derma_StringRequest( "New weapon set", "Enter new set's name", "newset", function ( text )
             RunConsoleCommand( "weaponsets", wepsets.fNameChange( text ) or "newset" )
+            f:Close()
         end, _, "Ok", "Cancel" )
     end
 
@@ -121,7 +122,7 @@ function wepsets.mainMenu( list, options )
     -- Only admin row
     local row2 = optionsTree:CreateRow( "WeaponSets Options", "Only admins" )
     row2:Setup( "Boolean" )
-    row2:SetValue( options.onlyAdmin or true )
+    row2:SetValue( options.onlyAdmin )
     row2.DataChanged = function( _, val )
         options.onlyAdmin = tobool( val );
     end

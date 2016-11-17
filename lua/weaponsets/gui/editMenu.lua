@@ -268,7 +268,7 @@ function wepsets.editMenu( name, tbl )
     -- Weapon strip row
     local plyRow1 = plyProp:CreateRow( "Booleans", "Strip weapons before giving" )
     plyRow1:Setup( "Boolean" )
-    plyRow1:SetValue( tobool( tbl.stripweapons or 0 ) )
+    plyRow1:SetValue( tbl.stripweapons or 0 )
     plyRow1.DataChanged = function( _, val )
         tbl.stripweapons = val;
     end
@@ -276,7 +276,7 @@ function wepsets.editMenu( name, tbl )
     -- Ammo strip row
     local plyRow2 = plyProp:CreateRow( "Booleans", "Strip ammo before giving" )
     plyRow2:Setup( "Boolean" )
-    plyRow2:SetValue( tobool( tbl.stripammo or 0 ) )
+    plyRow2:SetValue( tbl.stripammo or 0 )
     plyRow2.DataChanged = function( _, val )
         tbl.stripammo = val;
     end
@@ -284,7 +284,7 @@ function wepsets.editMenu( name, tbl )
     -- Flashlight row
     local plyRow3 = plyProp:CreateRow( "Booleans", "Allow flashlight" )
     plyRow3:Setup( "Boolean" )
-    plyRow3:SetValue( tobool( tbl.allowflashlight or 1 ) )
+    plyRow3:SetValue( tbl.allowflashlight or 1 )
     plyRow3.DataChanged = function( _, val )
         tbl.allowflashlight = val;
     end

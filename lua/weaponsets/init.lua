@@ -7,7 +7,7 @@ wepsets.pasteBinSets = "Q72iy08U"
 wepsets.version = "21.09.15";
 wepsets.options = wepsets.options or {
     loadoutset = "<default>",
-    onlyAdmin = true
+    onlyAdmin = 1
 }
 
 util.AddNetworkString( "wepsetsToSv" )
@@ -19,7 +19,7 @@ util.AddNetworkString( "wepsetsToCl" )
 ---------------------------------------------------------]]--
 function wepsets.cancmd( ply )
     if !ply then return false end
-    if ( wepsets.options.onlyAdmin == true ) then
+    if ( wepsets.options["onlyAdmin"] == 1 ) then
         return ply:IsSuperAdmin()
     else
         return true
@@ -104,7 +104,7 @@ function wepsets.dl()
     if file.Exists( "weaponsets_version.txt", "DATA" ) then
         if ( file.Read( "weaponsets_version.txt", "DATA" ) == wepsets.version ) then
             return false end end
-    http.Fetch( "http://pastebin.com/raw.php?i=Q72iy08U", function( body, _, _, _ )
+    http.Fetch( "http://pastebin.com/raw.php?i="..wepsets.pasteBinSets, function( body, _, _, _ )
         local tbl = util.JSONToTable( body )
         if ( tbl == nil ) then return false end
         for k,v in pairs( tbl ) do
@@ -205,9 +205,12 @@ end
     Concommands and hooks
 ---------------------------------------------------------]]--
 
-net.Receive( "wepsetsToSv", function( ply, _ )
+net.Receive( "wepsetsToSv", function( len, ply )
     local name = net.ReadString();
     local data = net.ReadTable();
+
+    print( "[WeaponSets] Net ("..ply:Nick()..") -> "..name )
+    PrintTable( data )
 
     if wepsets.netFuncs[name] != nil then
         wepsets.netFuncs[name]( ply, data ) end
@@ -219,7 +222,11 @@ concommand.Add( "weaponsets_give", function( ply, _, args, _ )
     if !wepsets.cancmd( ply ) then return false end
 
     if ( #args < 1 ) then
-        print( "[WeaponSets] Usage: weaponsets_give set userId [userId2...]" )
+        print( "[WeaponSets] Usage: weaponsets_give <weaponSetName> [userId1] [userId2] ..." )
+        net.Start( "wepsetsToCl" )
+            net.WriteString( "openGiveMenu" );
+            net.WriteTable( {} );
+        net.Send( ply );
     else
         local name = tostring( args[1] )
 
