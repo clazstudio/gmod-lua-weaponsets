@@ -349,7 +349,7 @@ function wepsets.editMenu( name, tbl )
         for k,v in pairs( ls:GetLines() ) do
             tbl.set[v:GetValue( 1 )] = v:GetValue( 2 );
         end
-        PrintTable( tbl )
+        -- PrintTable( tbl )
 
         net.Start( "wepsetsToSv" )
             net.WriteString( "saveSet" );

@@ -209,8 +209,8 @@ net.Receive( "wepsetsToSv", function( len, ply )
     local name = net.ReadString();
     local data = net.ReadTable();
 
-    print( "[WeaponSets] Net ("..ply:Nick()..") -> "..name )
-    PrintTable( data )
+    -- print( "[WeaponSets] Net ("..ply:Nick()..") -> "..name )
+    -- PrintTable( data )
 
     if wepsets.netFuncs[name] != nil then
         wepsets.netFuncs[name]( ply, data ) end
