@@ -4,7 +4,7 @@
 include( "weaponsets/shared.lua" )
 
 wepsets.pasteBinSets = "Q72iy08U"
-wepsets.version = "21.09.15";
+wepsets.version = "18.11.16"
 wepsets.options = wepsets.options or {
     loadoutset = "<default>",
     onlyAdmin = 1
@@ -223,10 +223,10 @@ concommand.Add( "weaponsets_give", function( ply, _, args, _ )
 
     if ( #args < 1 ) then
         print( "[WeaponSets] Usage: weaponsets_give <weaponSetName> [userId1] [userId2] ..." )
-        net.Start( "wepsetsToCl" )
-            net.WriteString( "openGiveMenu" );
-            net.WriteTable( {} );
-        net.Send( ply );
+        --[[net.Start( "wepsetsToCl" )
+            net.WriteString( "openGiveMenu" )
+            net.WriteTable( {} )
+        net.Send( ply )]]
     else
         local name = tostring( args[1] )
 
@@ -241,18 +241,6 @@ concommand.Add( "weaponsets_give", function( ply, _, args, _ )
                 wepsets.give( Player( id ), name )
             end
         end
-        --[[if ( args[1] == "*" ) then
-            for _,v in pairs( player.GetAll() ) do
-                wepsets.give( v, name )
-            end
-        elseif ( args[1] == "^" ) then
-            wepsets.give( ply, name )
-        else
-            for _,v in pairs( player.GetAll() ) do
-                if ( string.find( v:Nick(), args[1] ) ) then
-                    wepsets.give( v, name ) end
-            end
-        end]]
     end
 end, _, "Usage: weaponsets_give <weaponSetName> [userId1] [userId2] ...", FCVAR_CLIENTCMD_CAN_EXECUTE );
 
@@ -265,9 +253,9 @@ concommand.Add( "weaponsets", function( ply, _, args, _ )
         local name = tostring( args[1] )
         local tbl = wepsets.lff( name )
         net.Start( "wepsetsToCl" )
-            net.WriteString( "openEditMenu" );
-            net.WriteTable( { name = tbl.name or name, tbl = tbl } );
-        net.Send( ply );
+            net.WriteString( "openEditMenu" )
+            net.WriteTable( { name = tbl.name or name, tbl = tbl } )
+        net.Send( ply )
     else
         wepsets.fExists( "weaponsets" )
         local sets, _ = file.Find( "weaponsets/*.txt", "DATA" )
@@ -275,11 +263,11 @@ concommand.Add( "weaponsets", function( ply, _, args, _ )
             sets[k] = string.Left( v, #v-4 )
         end
         net.Start( "wepsetsToCl" )
-            net.WriteString( "openMainMenu" );
-            net.WriteTable( { list = sets, options = wepsets.options } );
-        net.Send( ply );
+            net.WriteString( "openMainMenu" )
+            net.WriteTable( { list = sets, options = wepsets.options } )
+        net.Send( ply )
     end
-end, nil, "Usage: weaponsets <weaponSetName>", FCVAR_CLIENTCMD_CAN_EXECUTE );
+end, nil, "Usage: weaponsets <weaponSetName>", FCVAR_CLIENTCMD_CAN_EXECUTE )
 
 -- Player loadout hook
 hook.Add( "PlayerLoadout", "weaponsets_plyloadout", function( ply )
