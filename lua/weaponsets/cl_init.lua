@@ -23,7 +23,7 @@ end
 
 -- Open give menu
 wepsets.netFuncs.openGiveMenu = function( data )
-    wepsets.giveMenu()
+    wepsets.giveMenu( data )
 end
 
 
@@ -37,4 +37,14 @@ net.Receive( "wepsetsToCl", function( _ )
 
     if wepsets.netFuncs[name] != nil then
         wepsets.netFuncs[name]( data ) end
+end )
+
+-- sandbox toolmenu support
+hook.Add( "PopulateToolMenu", "weaponsets_PopulateToolMenu", function()
+	spawnmenu.AddToolMenuOption( "Utilities", "WeaponSets", "WeaponSetsMainMenu", "Main menu", "weaponsets" )
+    spawnmenu.AddToolMenuOption( "Utilities", "WeaponSets", "WeaponSetsGiveMenu", "Give menu", "weaponsets_give" )
+end )
+
+hook.Add( "AddToolMenuCategories", "weaponsets_AddToolMenuCategories", function()
+	spawnmenu.AddToolCategory( "Utilities", "WeaponSets", "Weapon sets" )
 end )

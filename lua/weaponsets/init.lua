@@ -96,6 +96,18 @@ function wepsets.saveOptions()
     file.Write( "weaponsets_options.txt", util.TableToJSON( wepsets.options, true ) )
 end
 
+-- gets list of weaponsets
+function wepsets.getList()
+    wepsets.fExists( "weaponsets" )
+
+    local tbl, _ = file.Find( "weaponsets/*.txt", "DATA" )
+    for k, v in pairs( tbl ) do
+        tbl[k] = string.Left( v, #v-4 )
+    end
+
+    return tbl
+end
+
 
 --[[---------------------------------------------------------
     Downloading sets from pastebin
@@ -182,6 +194,11 @@ end
 wepsets.netFuncs.saveSet = function( ply, data )
     if ( wepsets.cancmd( ply ) ) then
         wepsets.stf( data.name, data.tbl )
+
+        if ulx then
+            ulx.wepsetsList = ulx.wepsetsList or {}
+            table.insert( ulx.wepsetsList, data.name )
+        end
     end
 end
 
@@ -189,6 +206,8 @@ end
 wepsets.netFuncs.deleteSet = function( ply, data )
     if ( wepsets.cancmd( ply ) ) then
         wepsets.delf( data.name )
+        if ulx and ulx.wepsetsList then
+            table.RemoveByValue( ulx.wepsetsList, data.name ) end
     end
 end
 
@@ -222,11 +241,11 @@ concommand.Add( "weaponsets_give", function( ply, _, args, _ )
     if !wepsets.cancmd( ply ) then return false end
 
     if ( #args < 1 ) then
-        print( "[WeaponSets] Usage: weaponsets_give <weaponSetName> [userId1] [userId2] ..." )
-        --[[net.Start( "wepsetsToCl" )
+        -- print( "[WeaponSets] Usage: weaponsets_give <weaponSetName> [userId1] [userId2] ..." )
+        net.Start( "wepsetsToCl" )
             net.WriteString( "openGiveMenu" )
-            net.WriteTable( {} )
-        net.Send( ply )]]
+            net.WriteTable( wepsets.getList() )
+        net.Send( ply )
     else
         local name = tostring( args[1] )
 
@@ -257,14 +276,9 @@ concommand.Add( "weaponsets", function( ply, _, args, _ )
             net.WriteTable( { name = tbl.name or name, tbl = tbl } )
         net.Send( ply )
     else
-        wepsets.fExists( "weaponsets" )
-        local sets, _ = file.Find( "weaponsets/*.txt", "DATA" )
-        for k,v in pairs( sets ) do
-            sets[k] = string.Left( v, #v-4 )
-        end
         net.Start( "wepsetsToCl" )
             net.WriteString( "openMainMenu" )
-            net.WriteTable( { list = sets, options = wepsets.options } )
+            net.WriteTable( { list = wepsets.getList(), options = wepsets.options } )
         net.Send( ply )
     end
 end, nil, "Usage: weaponsets <weaponSetName>", FCVAR_CLIENTCMD_CAN_EXECUTE )
@@ -282,7 +296,10 @@ hook.Add( "Initialize", "weaponsets_init", function()
     wepsets.loadOptions()
     timer.Simple( 5, function()
         wepsets.dl()
-    end)
+
+        if ulx then
+            ulx.wepsetsList = wepsets.getList() end
+    end )
 end )
 
 -- Shutdown hook

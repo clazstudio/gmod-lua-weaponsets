@@ -11,7 +11,7 @@ function wepsets.mainMenu( list, options )
     f:SetMinWidth( 250 )
     f:SetMinHeight( 300 )
     f:Center()
-    f:SetTitle( "WeaponSets Main menu " );
+    f:SetTitle( "WeaponSets Main menu" );
     f:ShowCloseButton( true )
     f:SetDeleteOnClose( true )
     f:SetDraggable( true )

@@ -152,8 +152,8 @@ function wepsets.editMenu( name, tbl )
         local t1 = vgui.Create( "DNumberWang", pan )
         t1:Dock( RIGHT )
         t1:SetSize( 100, 20 )
-        t1:SetValue( val )
         t1:SetMinMax( min, max )
+        t1:SetValue( val )
         t1:SetDecimals( 0 )
 
         local lbl1 = vgui.Create( "DLabel", pan )
@@ -174,13 +174,13 @@ function wepsets.editMenu( name, tbl )
     wepPan:Dock( TOP )
 
         local cb1 = vgui.Create( "DComboBox", wepPan ) -- Weapon
+        cb1:SetValue( "Select a weapon..." )
         cb1:DockMargin( pad, pad, pad, pad )
         cb1:SetSize( 150, 20 )
         cb1:Dock( TOP )
         for k, v in pairs( weplist ) do
             cb1:AddChoice( v[2].." ("..k..")", k )
         end
-        cb1:ChooseOptionID( math.random( 1,5 ) )
 
         local bt2 = vgui.Create( "DButton", wepPan )
         bt2:SetText( "Add weapon" )
@@ -188,6 +188,7 @@ function wepsets.editMenu( name, tbl )
         bt2:Dock( BOTTOM )
         bt2:SetSize( 150, 24 )
         bt2.DoClick = function()
+            if !cb1:GetSelectedID() then return false end
             ls:ClearSelection();
             local val = cb1:GetOptionData( cb1:GetSelectedID() );
             ls:AddLine( val, "-1" ):SetSelected( true )
@@ -201,13 +202,13 @@ function wepsets.editMenu( name, tbl )
     ammoPan:Dock( TOP )
 
         local cb2 = vgui.Create( "DComboBox", ammoPan ) -- Ammo
+        cb2:SetValue( "Select an ammo type..." )
         cb2:Dock( TOP )
         cb2:DockMargin( pad, pad, pad, pad )
         cb2:SetSize( 150, 20 )
         for _,v in pairs( ammolist ) do
             cb2:AddChoice( v )
         end
-        cb2:ChooseOptionID( math.random( 1, #ammolist-1 ) )
 
         -- Ammo count pan
         local ammoCountPan = labWang( 256, 1, 9999, "Ammo count: " )
@@ -219,11 +220,14 @@ function wepsets.editMenu( name, tbl )
         bt3:DockMargin( pad, pad, pad, pad )
         bt3:SetSize( 150, 24 )
         bt3.DoClick = function()
+            if !cb2:GetSelectedID() then return false end
             local val1 = ammoCountPan.numberWang:GetValue()
             local val2 = cb2:GetOptionText( cb2:GetSelectedID() )
 
             if game.GetAmmoID( val2 ) == -1 then
-                Derma_Message( "Ammo type don't found", "WeaponSets", "Ok" ) end
+                Derma_Message( "Ammo type don't found", "WeaponSets", "Ok" )
+                return false
+            end
 
             ls:ClearSelection()
             val1 = math.max( val1, -1 )
