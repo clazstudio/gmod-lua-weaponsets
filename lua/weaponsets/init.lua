@@ -39,7 +39,6 @@ function wepsets.fExists( path )
     return file.Exists( path, "DATA" );
 end
 
-
 -- Load wepset from file
 function wepsets.lff( name )
     name = wepsets.fNameChange( name )
@@ -62,7 +61,6 @@ function wepsets.lff( name )
     return tbl
 end
 
-
 -- Save wepset to file
 function wepsets.stf( name, tbl )
     name = wepsets.fNameChange( name )
@@ -71,7 +69,6 @@ function wepsets.stf( name, tbl )
     wepsets.fExists( path )
     file.Write( path, util.TableToJSON( tbl, true ) )
 end
-
 
 -- Delete wepset file
 function wepsets.delf( name )
