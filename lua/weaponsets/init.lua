@@ -49,7 +49,12 @@ function wepsets.lff( name )
     if ( wepsets.fExists( path ) ) then
         tbl = util.JSONToTable( file.Read( path, "DATA" ) )
         if tbl ~= nil then
-            return tbl end
+            for k, v in pairs( wepsets.newSetTable ) do
+                if tbl[k] == nil then tbl[k] = v end
+            end
+            tbl.name = name
+            return tbl
+        end
     end
 
     tbl = table.Copy( wepsets.newSetTable )
@@ -119,7 +124,7 @@ function wepsets.dl()
     http.Fetch( "http://pastebin.com/raw.php?i="..wepsets.pasteBinSets, function( body, _, _, _ )
         local tbl = util.JSONToTable( body )
         if ( tbl == nil ) then return false end
-        for k,v in pairs( tbl ) do
+        for k, v in pairs( tbl ) do
             http.Fetch( "http://pastebin.com/raw.php?i="..v, function( json, _, _, _ )
                 local set = util.JSONToTable( json )
                 if ( set == nil ) then return false end
@@ -194,11 +199,6 @@ end
 wepsets.netFuncs.saveSet = function( ply, data )
     if ( wepsets.cancmd( ply ) ) then
         wepsets.stf( data.name, data.tbl )
-
-        if ulx then
-            ulx.wepsetsList = ulx.wepsetsList or {}
-            table.insert( ulx.wepsetsList, data.name )
-        end
     end
 end
 
@@ -206,8 +206,6 @@ end
 wepsets.netFuncs.deleteSet = function( ply, data )
     if ( wepsets.cancmd( ply ) ) then
         wepsets.delf( data.name )
-        if ulx and ulx.wepsetsList then
-            table.RemoveByValue( ulx.wepsetsList, data.name ) end
     end
 end
 
@@ -296,9 +294,6 @@ hook.Add( "Initialize", "weaponsets_init", function()
     wepsets.loadOptions()
     timer.Simple( 5, function()
         wepsets.dl()
-
-        if ulx then
-            ulx.wepsetsList = wepsets.getList() end
     end )
 end )
 
