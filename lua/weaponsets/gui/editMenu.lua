@@ -169,7 +169,7 @@ function wepsets.editMenu( name, tbl )
     -- Weapon panel
     local wepPan = vgui.Create( "DPanel", rPan )
     wepPan:DockMargin( pad, pad, pad, pad )
-    wepPan:DockPadding( pad, pad, pad, pad)
+    wepPan:DockPadding( pad, pad, pad, pad )
     wepPan:SetHeight( 20 + 24 + pad * 6 )
     wepPan:Dock( TOP )
 
@@ -179,7 +179,7 @@ function wepsets.editMenu( name, tbl )
         cb1:SetSize( 150, 20 )
         cb1:Dock( TOP )
         for k, v in pairs( weplist ) do
-            cb1:AddChoice( v[2].." ("..k..")", k )
+            cb1:AddChoice( tostring(v[2]) .. " (" .. tostring(k) .. ")", tostring(k) )
         end
 
         local bt2 = vgui.Create( "DButton", wepPan )
@@ -207,7 +207,7 @@ function wepsets.editMenu( name, tbl )
         cb2:DockMargin( pad, pad, pad, pad )
         cb2:SetSize( 150, 20 )
         for _,v in pairs( ammolist ) do
-            cb2:AddChoice( v )
+            cb2:AddChoice( tostring(v) )
         end
 
         -- Ammo count pan
