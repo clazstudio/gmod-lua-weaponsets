@@ -1,10 +1,11 @@
 --[[---------------------------------------------------------
     CLIENT - cl_init.lua
 ---------------------------------------------------------]]--
-include( "weaponsets/shared.lua" )
-include( "weaponsets/gui/giveMenu.lua" )
-include( "weaponsets/gui/mainMenu.lua" )
-include( "weaponsets/gui/editMenu.lua" )
+include("weaponsets/shared.lua" )
+
+include("weaponsets/gui/giveMenu.lua")
+include("weaponsets/gui/mainMenu.lua")
+include("weaponsets/gui/editMenu.lua")
 
 
 --[[---------------------------------------------------------
@@ -12,18 +13,18 @@ include( "weaponsets/gui/editMenu.lua" )
 ---------------------------------------------------------]]--
 
 -- Open weapon set editing window
-wepsets.netFuncs.openEditMenu = function( data )
-    wepsets.editMenu( data.name, data.tbl )
+WEAPONSETS.NetFuncs.openEditMenu = function(data)
+    WEAPONSETS:EditMenu(data.name, data.tbl)
 end
 
 -- Open main menu
-wepsets.netFuncs.openMainMenu = function( data )
-    wepsets.mainMenu( data.list, data.options )
+WEAPONSETS.NetFuncs.openMainMenu = function(data)
+    WEAPONSETS:MainMenu(data.list, data.options)
 end
 
 -- Open give menu
-wepsets.netFuncs.openGiveMenu = function( data )
-    wepsets.giveMenu( data )
+WEAPONSETS.NetFuncs.openGiveMenu = function(data)
+    WEAPONSETS:GiveMenu(data)
 end
 
 
@@ -31,20 +32,20 @@ end
     Concommands and hooks
 ---------------------------------------------------------]]--
 
-net.Receive( "wepsetsToCl", function( _ )
+net.Receive("wepsetsToCl", function()
     local name = net.ReadString();
     local data = net.ReadTable();
 
-    if wepsets.netFuncs[name] != nil then
-        wepsets.netFuncs[name]( data ) end
-end )
+    if WEAPONSETS.NetFuncs[name] != nil then
+        WEAPONSETS.NetFuncs[name](data) end
+end)
 
 -- sandbox toolmenu support
-hook.Add( "PopulateToolMenu", "weaponsets_PopulateToolMenu", function()
-	spawnmenu.AddToolMenuOption( "Utilities", "WeaponSets", "WeaponSetsMainMenu", "Main menu", "weaponsets" )
-    spawnmenu.AddToolMenuOption( "Utilities", "WeaponSets", "WeaponSetsGiveMenu", "Give menu", "weaponsets_give" )
-end )
+hook.Add("PopulateToolMenu", "weaponsets_PopulateToolMenu", function()
+	spawnmenu.AddToolMenuOption("Utilities", "WeaponSets", "WeaponSetsMainMenu", "Main menu", "weaponsets")
+    spawnmenu.AddToolMenuOption("Utilities", "WeaponSets", "WeaponSetsGiveMenu", "Give menu", "weaponsets_give")
+end)
 
-hook.Add( "AddToolMenuCategories", "weaponsets_AddToolMenuCategories", function()
-	spawnmenu.AddToolCategory( "Utilities", "WeaponSets", "Weapon sets" )
-end )
+hook.Add("AddToolMenuCategories", "weaponsets_AddToolMenuCategories", function()
+	spawnmenu.AddToolCategory("Utilities", "WeaponSets", "Weapon sets")
+end)

@@ -2,60 +2,31 @@
     GUI - Weapon sets edit menu
 ---------------------------------------------------------]]--
 
-function wepsets.editMenu( name, tbl )
+function WEAPONSETS:EditMenu(name, tbl)
     local pad = 2 -- = padding/2 = margin/2
 
-    local weplist = {
-        --[["weapon_357" = {""},
-        "weapon_alyxgun" = {},
-        "weapon_annabelle" = {},
-        "weapon_ar2" = {},
-        "weapon_bugbait" = {},
-        "weapon_citizenpackage" = {},
-        "weapon_citizensuitcase" = {},
-        "weapon_crossbow" = {},
-        "weapon_crowbar" = {},
-        "weapon_frag" = {},
-        "weapon_physcannon" = {},
-        "weapon_physgun" = {},
-        "weapon_pistol" = {},
-        "weapon_rpg" = {},
-        "weapon_shotgun" = {},
-        "weapon_smg1" = {},
-        "weapon_stunstick" = {}]]
-        --"gmod_camera" = {},
-        --"gmod_tool" = {},
-        --"weapon_medkit" = {},
-        --"weapon_fists" = {}
-    }
-
+    local weplist = {}
     local ammolist = {}
 
     for i = 1, 25 do
-        if (game.GetAmmoName(i) == nil) then break end
+        if game.GetAmmoName(i) == nil then break end
         table.insert(ammolist, game.GetAmmoName(i))
     end
 
-    for k, v in pairs( list.Get( "Weapon" ) ) do
-    	if ( !v.Spawnable ) then continue end
-    	weplist[k] = {v.Category, v.PrintName or k};
+    for k, v in pairs(list.Get("Weapon")) do
+    	if !v.Spawnable then continue end
+    	weplist[k] = {v.Category, v.PrintName or k}
     end
 
-    for _, v in pairs( weapons.GetList() ) do
+    for _, v in pairs(weapons.GetList()) do
         local prim = (v.Primary or {}).Ammo
         local sec = (v.Secondary or {}).Ammo
+
         if (prim != nil and !table.HasValue(ammolist, prim)) then
             table.insert(ammolist, prim) end
         if (sec != nil and !table.HasValue(ammolist, sec)) then
             table.insert(ammolist, sec) end
-        --[[if ( !v.Spawnable ) then continue end
-        if (v.ClassName == nil) then continue end
-        weplist[v.ClassName] = {v.PrintName, v.Slot, prim, sec}]]
     end
-
-    --[[PrintTable(weplist)
-    print("---------------------------")
-    PrintTable(ammolist)]]
 
     ----------------[[ MAIN FORM ]]----------------
 
@@ -350,15 +321,14 @@ function wepsets.editMenu( name, tbl )
     bt4:SetSize( 150, 32 )
     bt4.DoClick = function()
         tbl.set = {}
-        for k,v in pairs( ls:GetLines() ) do
-            tbl.set[v:GetValue( 1 )] = v:GetValue( 2 );
+        for k, v in pairs(ls:GetLines()) do
+            tbl.set[v:GetValue(1)] = v:GetValue(2)
         end
-        -- PrintTable( tbl )
 
-        net.Start( "wepsetsToSv" )
-            net.WriteString( "saveSet" );
-            net.WriteTable( { name = name, tbl = tbl } );
-        net.SendToServer();
+        net.Start("wepsetsToSv")
+            net.WriteString("saveSet")
+            net.WriteTable({ name = name, tbl = tbl })
+        net.SendToServer()
 
         f:Close()
     end

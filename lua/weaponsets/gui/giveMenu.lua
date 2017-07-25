@@ -2,7 +2,7 @@
     GUI - Weapon sets give menu
 ---------------------------------------------------------]]--
 
-function wepsets.giveMenu( list )
+function WEAPONSETS:GiveMenu(list)
     local pad = 2
 
     -- Main frame
@@ -79,14 +79,14 @@ function wepsets.giveMenu( list )
     bt2:SetSize( 150, 24 )
     bt2.DoClick = function()
         if !cb1:GetSelectedID() then return false end
-        local name = cb1:GetOptionText( cb1:GetSelectedID() )
+        local name = cb1:GetOptionText(cb1:GetSelectedID())
         local tbl = {}
 
         for k, v in pairs(ls:GetSelected()) do
-            table.insert( tbl, v:GetColumnText( 1 ) )
+            table.insert(tbl, v:GetColumnText(1))
         end
 
-        RunConsoleCommand( "weaponsets_give", name, unpack( tbl ) )
+        RunConsoleCommand("weaponsets_give", name, unpack(tbl))
     end
 
     -- Give button
@@ -97,8 +97,8 @@ function wepsets.giveMenu( list )
     bt3:SetSize( 150, 24 )
     bt3.DoClick = function()
         if cb1:GetSelectedID() == -1 then return false end
-        local name = cb1:GetOptionText( cb1:GetSelectedID() )
-        RunConsoleCommand( "weaponsets_give", name )
+        local name = cb1:GetOptionText(cb1:GetSelectedID())
+        RunConsoleCommand("weaponsets_give", name)
     end
 
     bt1.DoClick()

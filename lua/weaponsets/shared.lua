@@ -3,7 +3,7 @@
 ---------------------------------------------------------]]--
 
 -- new weapon set table
-wepsets.newSetTable = {
+local emptySet = {
     stripweapons = 0,
     stripammo = 0,
     allowflashlight = 1,
@@ -16,9 +16,14 @@ wepsets.newSetTable = {
     set = {}
 }
 
+function WEAPONSETS:GetEmptySet()
+    return table.Copy(emptySet)
+end
+
 -- Filename changing
-function wepsets.fNameChange( text )
-    text = string.Replace( string.lower( text ), " ", "_" )
-    text = string.gsub( text, '[\\/:%*%?"<>|]', "" )
+function WEAPONSETS:FormatFileName(text)
+    text = string.Replace(string.lower(text), " ", "_")
+    text = string.Replace(text, ".", "_")
+    text = string.gsub(text, '[\\/:%*%?"<>,;|]', "")
     return text
 end

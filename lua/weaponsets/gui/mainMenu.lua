@@ -2,7 +2,7 @@
     GUI - Weapon sets main menu
 ---------------------------------------------------------]]--
 
-function wepsets.mainMenu( list, options )
+function WEAPONSETS:MainMenu(list, options)
     local pad = 2;
 
     -- Main frame
@@ -65,20 +65,20 @@ function wepsets.mainMenu( list, options )
     bt1:DockMargin( pad, pad, pad, pad )
     bt1:SetSize( 150, 24 )
     bt1.DoClick = function()
-        if ( #ls:GetLines() < 1 ) then return end
-        local name = ls:GetSelected()[1]:GetColumnText( 1 )
+        if #ls:GetLines() < 1 then return end
+        local name = ls:GetSelected()[1]:GetColumnText(1)
         local ind = ls:GetSelectedLine();
 
-        Derma_Query( "Are you sure?", "Weapon set deleting", "Delete!", function()
-            net.Start( "wepsetsToSv" )
-                net.WriteString( "deleteSet" );
-                net.WriteTable( { name = name } );
-            net.SendToServer();
+        Derma_Query("Are you sure?", "Weapon set deleting", "Delete!", function()
+            net.Start("wepsetsToSv")
+                net.WriteString("deleteSet")
+                net.WriteTable({ name = name })
+            net.SendToServer()
 
-            ls:RemoveLine( ind );
-            if ( #ls:GetLines() > 0 ) then
+            ls:RemoveLine(ind)
+            if #ls:GetLines() > 0 then
                 ls:SelectFirstItem() end
-        end, "Cancel", nil )
+        end, "Cancel", nil)
     end
 
     -- Edit button
@@ -90,7 +90,7 @@ function wepsets.mainMenu( list, options )
     bt2.DoClick = function()
         if ( #ls:GetLines() < 1 ) then return end
         local name = ls:GetSelected()[1]:GetColumnText( 1 )
-        RunConsoleCommand( "weaponsets", name )
+        RunConsoleCommand("weaponsets", name)
     end
 
     -- Add button
@@ -100,10 +100,10 @@ function wepsets.mainMenu( list, options )
     bt3:DockMargin( pad, pad, pad, pad )
     bt3:SetSize( 150, 24 )
     bt3.DoClick = function()
-        Derma_StringRequest( "New weapon set", "Enter new set's name", "newset", function ( text )
-            RunConsoleCommand( "weaponsets", wepsets.fNameChange( text ) or "newset" )
+        Derma_StringRequest("New weapon set", "Enter new set's name", "newset", function(text)
+            RunConsoleCommand("weaponsets", WEAPONSETS:FormatFileName(text or "newset"))
             f:Close()
-        end, _, "Ok", "Cancel" )
+        end, _, "Ok", "Cancel")
     end
 
     ----------------[[ RIGHT PANEL ]]----------------
@@ -134,13 +134,11 @@ function wepsets.mainMenu( list, options )
     bt4:DockMargin( pad, pad, pad, pad )
     bt4:SetSize( 150, 24 )
     bt4.DoClick = function()
-        net.Start( "wepsetsToSv" )
-            net.WriteString( "saveOptions" );
-            net.WriteTable( options );
-        net.SendToServer();
+        net.Start("wepsetsToSv")
+            net.WriteString("saveOptions")
+            net.WriteTable(options)
+        net.SendToServer()
     end
 
     return f
 end
-
--- Derma_Query( msgText, msgTitle, bt1Text, bt1Func, bt2Text, bt2Func )
