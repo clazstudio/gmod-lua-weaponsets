@@ -134,7 +134,7 @@ function WEAPONSETS:Download()
             end)
         end
 
-        file.Write("weaponsets_version.txt", self:Version)
+        file.Write("weaponsets_version.txt", self.Version)
     end)
 end
 
@@ -291,7 +291,7 @@ end)
 -- Init hook
 hook.Add("Initialize", "weaponsets_init", function()
     WEAPONSETS:LoadOptions()
-    timer.Simple( 5, function()
+    timer.Simple(5, function()
         WEAPONSETS:Download()
     end)
 end)
