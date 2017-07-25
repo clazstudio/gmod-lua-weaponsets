@@ -8,12 +8,12 @@ This addon allows you to create, edit and give sets (kits) of weapons and ammuni
 3. Run (or restart) Garry's mod
 
 ## How to use in game
-In Sandbox gamemode: Q -> Utilities -> Weapon sets
+In Sandbox gamemode: **Q -> Utilities -> Weapon sets**
 ![Screenshot of sandbox menu](https://steamuserimages-a.akamaihd.net/ugc/132123452829560338/88851415C7FE8EFB27B0B73A5E39D55A6D2B403C/)
 
 ### Console commands
-- weaponsets - Open main menu
-- weaponsets <set_name> - Edit a set
-- weaponsets_give - Open set givig menu
-- weaponsets_give <set_name> - Give set to all players
-- weaponsets_give <set_name> <UserID1> <UserId2> ... - Give set to players by UserId (status concommand)
+- `weaponsets` - Open main menu
+- `weaponsets <set_name>` - Edit a set
+- `weaponsets_give` - Open set givig menu
+- `weaponsets_give <set_name>` - Give set to all players
+- `weaponsets_give <set_name> <UserID1> <UserId2> ...` - Give set to players by UserId (status concommand)
