@@ -1,13 +1,19 @@
 --[[---------------------------------------------------------
     SERVER - init.lua
 ---------------------------------------------------------]]--
+
 include("weaponsets/shared.lua")
+include("weaponsets/player.lua")
+include("weaponsets/commands.lua")
 
 WEAPONSETS.PasteBinSets = "Q72iy08U"
 WEAPONSETS.Version = "18.11.16"
-WEAPONSETS.Options = WEAPONSETS.Options or {
-    loadoutset = "<default>",
-    onlyAdmin = 1
+
+WEAPONSETS.Convars = {
+    ["loadoutSet"] = CreateConVar("weaponsets_loadoutset", "<default>", { FCVAR_REPLICATED, FCVAR_ARCHIVE }, 
+                                  "Loadout weapon set for all players"),
+    ["adminOnly"] = CreateConVar("weaponsets_adminonly", "1", { FCVAR_REPLICATED, FCVAR_NOTIFY, FCVAR_ARCHIVE }, 
+                                 "If enabled only superadmin can give and edit weaponsets")
 }
 
 util.AddNetworkString("wepsetsToSv")
@@ -19,7 +25,7 @@ util.AddNetworkString("wepsetsToCl")
 ---------------------------------------------------------]]--
 function WEAPONSETS:Access(ply)
     if !IsValid(ply) then return true end
-    if self.Options["onlyAdmin"] == 1 then
+    if self.Convars["adminOnly"]:GetBool() then
         return ply:IsSuperAdmin()
     else
         return true
@@ -32,77 +38,60 @@ end
 ---------------------------------------------------------]]--
 
 -- File exists and addon folder creation
-function WEAPONSETS:FileExists(path)
+function WEAPONSETS:FileExists(name)
+    local path = "weaponsets/" .. (name or "") .. ".txt"
     if !file.Exists("weaponsets", "DATA") then
         file.CreateDir("weaponsets")
         return false
     end
-    return file.Exists(path, "DATA")
+    return file.Exists(path, "DATA"), path
 end
 
 -- Load wepset from file
+local lastLoadedName = nil
+local lastLoadedTable = nil
 function WEAPONSETS:LoadFromFile(name)
+    if lastLoadedName == name then
+        return lastLoadedTable end
     name = self:FormatFileName(name)
-    local path = "weaponsets/" .. name .. ".txt"
-    local tbl = {}
 
-    if self:FileExists(path) then
-        tbl = util.JSONToTable(file.Read(path, "DATA"))
-        local empty = self:GetEmptySet()
-        if tbl ~= nil then
-            for k, v in pairs(empty) do
-                if tbl[k] == nil then tbl[k] = v end
-            end
-            tbl.name = name
-            return tbl
+    local exists, path = self:FileExists(name)
+    if exists then
+        local tbl = util.JSONToTable(file.Read(path, "DATA"))
+        if tbl != nil then
+            lastLoadedName = name
+            lastLoadedTable = tbl
         end
+        return tbl
     end
 
-    tbl = self:GetEmptySet()
-    tbl.name = name
-    return tbl
+    return nil
 end
 
 -- Save wepset to file
 function WEAPONSETS:SaveToFile(name, tbl)
     name = self:FormatFileName(name)
-    local path = "weaponsets/" .. name .. ".txt"
+    local exists, path = self:FileExists(name)
 
-    self:FileExists(path)
-    return file.Write(path, util.TableToJSON(tbl, true))
+    if lastLoadedName == name then 
+        lastLoadedTable = tbl end
+    file.Write(path, util.TableToJSON(tbl, true))
+    return exists
 end
 
 -- Delete wepset file
 function WEAPONSETS:DeleteFile(name)
     name = self:FormatFileName(name)
-    local path = "weaponsets/" .. name .. ".txt"
-    if !self:FileExists(path) then return false end
+    local exists, path = self:FileExists(name)
+    if !exists then return false end
 
     file.Delete(path)
     return true
 end
 
--- Load options
-function WEAPONSETS:LoadOptions()
-    local path = "weaponsets_options.txt"
-
-    if file.Exists(path, "DATA") then
-        local tbl = util.JSONToTable(file.Read(path, "DATA"))
-        if tbl ~= nil then
-            self.Options = tbl
-        end
-    end
-end
-
--- Save options
-function WEAPONSETS:SaveOptions()
-    if !self.Options then return false end
-    file.Write("weaponsets_options.txt", util.TableToJSON(self.Options, true))
-end
-
 -- gets list of weaponsets
 function WEAPONSETS:GetList()
-    self:FileExists("weaponsets")
+    self:FileExists()
 
     local tbl, _ = file.Find("weaponsets/*.txt", "DATA")
     for k, v in pairs(tbl) do
@@ -114,28 +103,70 @@ end
 
 
 --[[---------------------------------------------------------
-    Downloading sets from pastebin
+    Send weapon sets list to client(s)
 ---------------------------------------------------------]]--
-function WEAPONSETS:Download()
-    if file.Exists("weaponsets_version.txt", "DATA") then
-        if file.Read("weaponsets_version.txt", "DATA") == self.Version then
-            return false 
-        end 
-    end
-    http.Fetch("http://pastebin.com/raw.php?i=" .. self.PasteBinSets, function(body, _, _, _)
-        local tbl = util.JSONToTable(body)
-        if tbl == nil then return false end
-        for k, v in pairs(tbl) do
-            http.Fetch( "http://pastebin.com/raw.php?i=" .. v, function(json, _, _, _)
-                local set = util.JSONToTable(json)
-                if set == nil then return false end
-                self:SaveToFile(set.name, set)
-                print("[WeaponSets] Downloaded: " .. set.name)
-            end)
-        end
+function WEAPONSETS:SendList(ply)
+    net.Start("wepsetsToCl")
+    net.WriteString("receiveList")
+    net.WriteTable(WEAPONSETS:GetList())
 
-        file.Write("weaponsets_version.txt", self.Version)
-    end)
+    if IsValid(ply) then
+        net.Send(ply)
+    else
+        net.Broadcast()
+    end
+end
+
+--[[---------------------------------------------------------
+    Open Give and Players menu
+---------------------------------------------------------]]--
+function WEAPONSETS:OpenGiveMenu(ply)
+    if !IsValid(ply) then return false end
+    if !WEAPONSETS:Access(ply) then return false end
+
+    local tbl = {}
+    for _, v in pairs(player.GetAll()) do
+        table.insert(tbl, {
+            id = v:UserID(),
+            nick = v:Nick(),
+            loadout = v:GetWeaponSet(),
+            last = v.lastWeaponSet or "none"
+        })
+    end
+    
+    net.Start("wepsetsToCl")
+        net.WriteString("openGiveMenu")
+        net.WriteTable({ sets = self:GetList(), plys = tbl })
+    net.Send(ply)
+end
+
+
+--[[---------------------------------------------------------
+    Save default multipliers values
+---------------------------------------------------------]]--
+function WEAPONSETS:SaveDefaults(ply)
+    local tbl = {}
+
+    tbl.gravity = ply:GetGravity()
+    tbl.step = ply:GetStepSize()
+
+    ply.weaponsets_defaults = tbl
+end
+
+
+--[[---------------------------------------------------------
+    Restore default multipliers values
+---------------------------------------------------------]]--
+function WEAPONSETS:RestoreDefaults(ply)
+    ply.weaponsets_affected = false
+    if ply.weaponsets_affected == nil or ply.weaponsets_defaults == nil then
+        return self:SaveDefaults(ply)
+    end
+    local tbl = ply.weaponsets_defaults
+
+    ply:SetGravity(tbl.gravity)
+    self:SetPlayerSize(ply, 1)
+    ply:SetStepSize(tbl.step)
 end
 
 
@@ -144,6 +175,12 @@ end
 ---------------------------------------------------------]]--
 function WEAPONSETS:Give(ply, name)
     if !IsValid(ply) then return false end
+    if name == "<inherit>" then
+        name = self.Convars["loadoutSet"]:GetString() end
+    ply.lastWeaponSet = name
+
+    self:RestoreDefaults(ply)
+    if name == "<default>" then return false end
     
     local tbl = self:LoadFromFile(name)
     if tbl == nil then return false end
@@ -156,15 +193,43 @@ function WEAPONSETS:Give(ply, name)
         ply:SetMaxHealth(tbl.maxhealth) end
     if tbl.jump > -1 then
         ply:SetJumpPower(tbl.jump) end
-    if tbl.gravity ~= 1 then
-        ply:SetGravity(tbl.gravity) end
+    if self.BloodEnums[tbl.blood] then
+        ply:SetBloodColor(tbl.blood) end
+    if tbl.friction > -1.0 then
+        ply:SetFriction(tbl.friction) end
     
     if tbl.speed ~= 1 then
-        ply:SetCrouchedWalkSpeed(ply:GetCrouchedWalkSpeed() * tbl.speed)
-        ply:SetWalkSpeed(ply:GetWalkSpeed() * tbl.speed)
-        ply:SetRunSpeed(ply:GetRunSpeed() * tbl.speed)
-        ply:SetMaxSpeed(ply:GetMaxSpeed() * tbl.speed)
+        ply:SetCrouchedWalkSpeed(math.Round(ply:GetCrouchedWalkSpeed() * tbl.speed))
+        ply:SetWalkSpeed(math.Round(ply:GetWalkSpeed() * tbl.speed))
+        ply:SetRunSpeed(math.Round(ply:GetRunSpeed() * tbl.speed))
+        ply:SetMaxSpeed(math.Round(ply:GetMaxSpeed() * tbl.speed))
+
+        ply:SetDuckSpeed(ply:GetDuckSpeed() / tbl.speed)
+        ply:SetUnDuckSpeed(ply:GetUnDuckSpeed() / tbl.speed)
     end
+
+    if tbl.opacity < 255 and tbl.opacity >= 0 then
+        ply:SetNoDraw(false)
+        ply:SetRenderMode(RENDERMODE_TRANSALPHA) 
+        local col = ply:GetColor()
+        col.a = tbl.opacity
+        ply:SetColor(col)
+    elseif tbl.opacity <= -1 then
+        -- fully hidden
+        ply:SetNoDraw(true)
+    end
+
+    if tbl.scale != 1 then
+        self:SetPlayerSize(ply, tbl.scale)
+        ply.weaponsets_affected = true
+    end
+
+    if tbl.gravity ~= 1 then
+        ply:SetGravity(tbl.gravity) 
+        ply.weaponsets_affected = true
+    end
+
+    ply:ShouldDropWeapon(tobool(tbl.dropweapons))
 
     if tobool(tbl.stripweapons) == true then
         ply:StripWeapons() end
@@ -178,7 +243,7 @@ function WEAPONSETS:Give(ply, name)
         ply:StripAmmo() end
     for k, v in pairs(tbl.set) do
         if tonumber(v) > 0 then
-            ply:GiveAmmo(v, k, true)
+            ply:GiveAmmo(v, tostring(k), true)
         end
     end
 
@@ -187,9 +252,65 @@ function WEAPONSETS:Give(ply, name)
         ply:Flashlight(false)
     end
 
-    ply:SwitchToDefaultWeapon()
+    if table.Count(tbl.set) != 0 then
+        ply:SwitchToDefaultWeapon() end
 
-    return true, tobool(tbl.stripweapons)
+    return true
+end
+
+
+--[[---------------------------------------------------------
+    Downloading sets from Pastebin
+---------------------------------------------------------]]--
+function WEAPONSETS:Download()
+    http.Fetch("http://pastebin.com/raw.php?i=" .. self.PasteBinSets, function(body, _, _, _)
+        local tbl = util.JSONToTable(body)
+        if tbl == nil then return false end
+        for name, id in pairs(tbl) do
+            http.Fetch( "http://pastebin.com/raw.php?i=" .. id, function(json, _, _, _)
+                local set = util.JSONToTable(json)
+                if set == nil then return false end
+                self:SaveToFile(name, set)
+                print("[WeaponSets] Downloaded: " .. set.name)
+            end)
+        end
+    end)
+end
+
+
+--[[---------------------------------------------------------
+    Backward compatibility
+---------------------------------------------------------]]--
+function WEAPONSETS:Upgrade()
+    if file.Exists("weaponsets_version.txt", "DATA") then
+        if file.Read("weaponsets_version.txt", "DATA") == self.Version then
+            return
+        else
+            -- Options -> Convars
+            if file.Exists("weaponsets_options.txt", "DATA") then
+                local options = util.JSONToTable(file.Read("weaponsets_options.txt", "DATA"))
+                if options then
+                    if options.loadoutset then
+                        self.Convars["loadoutSet"]:SetString(options.loadoutset) end
+                    if options.onlyAdmin then
+                        self.Convars["adminOnly"]:SetBool(tobool(options.onlyAdmin)) end
+                end
+                file.Delete("weaponsets_options.txt")
+                print("[WeaponSets] Options -> Convars")
+            end
+            -- Validate all weapon sets
+            local sets = self:GetList()
+            for _, name in pairs(sets) do
+                local tbl = self:LoadFromFile(name)
+                name, tbl = self:ValidateWeaponSet(name, tbl)
+                self:SaveToFile(name, set)
+                print("[WeaponSets] Validated: " .. name)
+            end
+        end 
+    end
+
+    timer.Simple(5, function() WEAPONSETS:Download() end)
+    file.Write("weaponsets_version.txt", self.Version)
 end
 
 
@@ -200,28 +321,21 @@ end
 -- Save weapon set to file
 WEAPONSETS.NetFuncs.saveSet = function(ply, data)
     if WEAPONSETS:Access(ply) then
-        WEAPONSETS:SaveToFile(data.name, data.tbl)
+        if !WEAPONSETS:SaveToFile(WEAPONSETS:ValidateWeaponSet(data.name, data.tbl)) then
+            WEAPONSETS:SendList() end
     end
 end
 
--- Delete weapon set
-WEAPONSETS.NetFuncs.deleteSet = function(ply, data)
+-- Retrieve weapon sets list
+WEAPONSETS.NetFuncs.retrieveList = function(ply, data)
     if WEAPONSETS:Access(ply) then
-        WEAPONSETS:DeleteFile(data.name)
-    end
-end
-
--- Save settings
-WEAPONSETS.NetFuncs.saveOptions = function(ply, data)
-    if WEAPONSETS:Access(ply) then
-        WEAPONSETS.Options = data
-        WEAPONSETS:SaveOptions()
+        WEAPONSETS:SendList(ply)
     end
 end
 
 
 --[[---------------------------------------------------------
-    Concommands and hooks
+    Hooks
 ---------------------------------------------------------]]--
 
 net.Receive("wepsetsToSv", function(len, ply)
@@ -232,71 +346,18 @@ net.Receive("wepsetsToSv", function(len, ply)
         WEAPONSETS.NetFuncs[name](ply, data) end
 end)
 
--- give concommand
-concommand.Add("weaponsets_give", function(ply, _, args, _)
-    if !IsValid(ply) then return false end
-    if !WEAPONSETS:Access(ply) then return false end
-
-    if #args < 1 then
-        net.Start("wepsetsToCl")
-            net.WriteString("openGiveMenu")
-            net.WriteTable(WEAPONSETS:GetList())
-        net.Send(ply)
-    else
-        local name = tostring(args[1])
-
-        if #args < 2 then
-            for _,v in pairs(player.GetAll()) do
-                WEAPONSETS:Give(v, name)
-            end
-        else
-            for i = 2, #args, 1 do
-                local id = tonumber(args[i])
-                if !id then continue end
-                WEAPONSETS:Give(Player(id), name)
-            end
-        end
-    end
-end, _, "Usage: weaponsets_give <weaponSetName> [userId1] [userId2] ...", FCVAR_CLIENTCMD_CAN_EXECUTE)
-
--- "weaponsets" concommand
-concommand.Add("weaponsets", function(ply, _, args, _)
-    if !IsValid(ply) then return false end
-    if !WEAPONSETS:Access(ply) then return false end
-
-    if #args == 1 then
-        local name = tostring(args[1])
-        local tbl = WEAPONSETS:LoadFromFile(name)
-        net.Start("wepsetsToCl")
-            net.WriteString("openEditMenu")
-            net.WriteTable({ name = tbl.name or name, tbl = tbl })
-        net.Send(ply)
-    else
-        net.Start("wepsetsToCl")
-            net.WriteString("openMainMenu")
-            net.WriteTable({ list = WEAPONSETS:GetList(), options = WEAPONSETS.Options })
-        net.Send(ply)
-    end
-end, nil, "Usage: weaponsets <weaponSetName>", FCVAR_CLIENTCMD_CAN_EXECUTE)
-
 -- Player loadout hook
-hook.Add("PlayerLoadout", "weaponsets_plyloadout", function(ply)
-    local name = WEAPONSETS.Options.loadoutset
-    if name and name ~= "<default>" then
-        local _, strip = WEAPONSETS:Give(ply, WEAPONSETS.Options.loadoutset)
-        if strip then return false end
-    end
+hook.Add("PlayerLoadout", "weaponsets_PlayerLoadout", function(ply)
+    local result = ply:GiveWeaponSet()
+    if result then return false end
 end)
 
 -- Init hook
-hook.Add("Initialize", "weaponsets_init", function()
-    WEAPONSETS:LoadOptions()
-    timer.Simple(5, function()
-        WEAPONSETS:Download()
-    end)
+hook.Add("Initialize", "weaponsets_Initialize", function()
+    WEAPONSETS:Upgrade()
 end)
 
--- Shutdown hook
-hook.Add("ShutDown", "weaponsets_shutdown", function()
-    WEAPONSETS:SaveOptions()
+-- Player initial spawn hook
+hook.Add("PlayerInitialSpawn", "weaponsets_PlayerInitialSpawn", function(ply)
+	WEAPONSETS.NetFuncs.retrieveList(ply)
 end)

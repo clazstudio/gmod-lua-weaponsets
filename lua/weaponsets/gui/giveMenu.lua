@@ -1,106 +1,179 @@
 --[[---------------------------------------------------------
-    GUI - Weapon sets give menu
+    GUI - Weapon sets give and loadout management window
 ---------------------------------------------------------]]--
 
-function WEAPONSETS:GiveMenu(list)
+function WEAPONSETS:OpenGiveMenu(tbl, sets)
     local pad = 2
 
     -- Main frame
-    local f = vgui.Create( "DFrame" )
-    f:SetSize( 300, 250 )
-    f:SetTitle( "WeaponSets Give menu" )
-    f:ShowCloseButton( true )
-    f:SetDeleteOnClose( true )
-    f:SetDraggable( true )
-    f:SetVisible( true )
-    f:SetSizable( true )
-    f:DockPadding( 0, 24, 0, 0 )
+    local f = vgui.Create("DFrame")
+    f:SetSize(600, 400)
+    f:SetMinWidth(400)
+    f:SetMinHeight(300)
+    f:SetTitle("WeaponSets Give and Loadout management")
+    f:ShowCloseButton(true)
+    f:SetDeleteOnClose(true)
+    f:SetDraggable(true)
+    f:SetSizable(true)
+    f:DockPadding(0, 24, 0, 0)
     f:Center()
     f:MakePopup()
 
-    local lPan = vgui.Create( "DPanel", f )
-    lPan:DockPadding( pad, pad, 0, pad )
-    lPan:SetDrawBackground( false )
-    lPan:Dock( FILL )
+    local lPan = vgui.Create("DPanel", f)
+    lPan:DockPadding(pad, pad, 0, pad)
+    lPan:SetDrawBackground(false)
+    lPan:Dock(FILL)
 
-    -- Right panel
-    local rPan = vgui.Create( "DPanel", f )
-    rPan:DockPadding( pad, pad, pad, pad )
-    rPan:SetDrawBackground( false )
-    rPan:SetWidth( 100 )
-    rPan:Dock( RIGHT )
+    local rPan = vgui.Create("DPanel", f)
+    rPan:DockPadding(pad, pad, pad, pad)
+    rPan:SetDrawBackground(false)
+    rPan:SetWidth(200)
+    rPan:Dock(RIGHT)
 
     -- List
-    local ls = vgui.Create( "DListView", lPan )
-    ls:Dock( FILL )
-    ls:DockMargin( pad, pad, pad, pad )
-    ls:SetMultiSelect( true )
-    ls:AddColumn( "UserID" ):SetWidth( 10 )
-    ls:AddColumn( "Nick" )
+    local ls = vgui.Create("DListView", lPan)
+    ls:Dock(FILL)
+    ls:DockMargin(pad, pad, pad, pad)
+    ls:SetMultiSelect(true)
+    ls:AddColumn("UserID"):SetWidth(10)
+    ls:AddColumn("Nick")
+    ls:AddColumn("Loadout set")
+    ls:AddColumn("Last given")
+    local localPlayerId = LocalPlayer():UserID()
+    for _, v in pairs(tbl) do
+        local line = ls:AddLine(v.id, v.nick, v.loadout, v.last)
+        if v.id == localPlayerId then ls:SelectItem(line) end
+    end
+
+    ------------------
+    -- Bottom panel --
+    ------------------
+    local bottPan = vgui.Create("DPanel", rPan)
+    bottPan:SetDrawBackground(false)
+    bottPan:Dock(BOTTOM)
+    bottPan:DockMargin(pad, pad, pad, pad)
+    bottPan:SetHeight(48 + pad * 2)
 
     -- Refresh button
-    local bt1 = vgui.Create( "DButton", lPan )
-    bt1:SetText( "Refresh" )
-    bt1:Dock( BOTTOM )
-    bt1:DockMargin( pad, pad, pad, pad )
-    bt1:SetSize( 150, 24 )
+    local bt1 = vgui.Create("DButton", bottPan)
+    bt1:SetText("Refresh list (reopen this window)")
+    bt1:Dock(BOTTOM)
+    bt1:DockMargin(0, pad * 2, 0, 0)
+    bt1:SetEnabled(false)
+    bt1:SetHeight(24)
     bt1.DoClick = function()
-        ls:Clear();
-        for _, v in pairs( player.GetAll() ) do
-            ls:AddLine( v:UserID(), v:Nick() )
-        end
-        if ( #ls:GetLines() > 0 ) then
-            ls:SelectFirstItem() end
+        f:Close()
+        RunConsoleCommand("weaponsets_give")
     end
+    timer.Simple(5, function() if IsValid(bt1) then bt1:SetEnabled(true) end end)
 
-    -- Label
-    --[[local lbl1 = vgui.Create( "DLabel", pan )
-    lbl1:Dock( TOP )
-    lbl1:DockMargin( pad, pad, pad, pad )
-    lbl1:SetContentAlignment( 4 )
-    lbl1:SetText( "WeaponSet:" )
-    lbl1:SetDark( true )]]
-
-    -- Combobox
-    local cb1 = vgui.Create( "DComboBox", rPan )
-    cb1:SetValue( "Select a set..." )
-    cb1:DockMargin( pad, pad, pad, pad )
-    cb1:SetSize( 150, 20 )
-    cb1:Dock( TOP )
-    for k, v in pairs( list ) do
-        cb1:AddChoice( v )
-    end
-
-    -- Give button
-    local bt2 = vgui.Create( "DButton", rPan )
-    bt2:SetText( "Give" )
-    bt2:Dock( BOTTOM )
-    bt2:DockMargin( pad, pad, pad, pad )
-    bt2:SetSize( 150, 24 )
+    -- Select all button
+    local bt2 = vgui.Create("DButton", bottPan)
+    bt2:SetText("Select all")
+    bt2:Dock(BOTTOM)
+    bt2:SetHeight(24)
     bt2.DoClick = function()
-        if !cb1:GetSelectedID() then return false end
-        local name = cb1:GetOptionText(cb1:GetSelectedID())
-        local tbl = {}
-
-        for k, v in pairs(ls:GetSelected()) do
-            table.insert(tbl, v:GetColumnText(1))
+        for _, v in pairs(ls:GetLines()) do
+            ls:SelectItem(v)
         end
-
-        RunConsoleCommand("weaponsets_give", name, unpack(tbl))
     end
 
-    -- Give button
-    local bt3 = vgui.Create( "DButton", rPan )
-    bt3:SetText( "Give to all" )
-    bt3:Dock( BOTTOM )
-    bt3:DockMargin( pad, pad, pad, pad )
-    bt3:SetSize( 150, 24 )
-    bt3.DoClick = function()
-        if cb1:GetSelectedID() == -1 then return false end
-        local name = cb1:GetOptionText(cb1:GetSelectedID())
-        RunConsoleCommand("weaponsets_give", name)
+    -----------------------
+    -- Selection actions --
+    -----------------------
+    local function massPlysUnpack(col, comm, name)
+        local tbl = {}
+        for _, v in pairs(ls:GetSelected()) do
+            table.insert(tbl, v:GetColumnText(1))
+            v:SetColumnText(col, name)
+        end
+	    RunConsoleCommand(comm, name, unpack(tbl))
+    end
+    local function buildWeaponListMenu(subMenu, callback)
+        subMenu = subMenu or DermaMenu()
+        for _, name in pairs(sets) do
+            subMenu:AddOption(name, function() callback(name) end)
+        end
     end
 
-    bt1.DoClick()
+    local rPan1 = vgui.Create("DCollapsibleCategory", rPan)
+    rPan1:Dock(TOP)
+    rPan1:DockMargin(pad, pad, pad, pad)
+    rPan1:DockPadding(pad, pad, pad, pad)
+    rPan1:SetLabel("Selection actions")
+
+    -- Select loadout combobox
+    local combo1 = vgui.Create("DComboBox", rPan1)
+    combo1:Dock(TOP)
+    combo1:DockMargin(pad, pad, pad, pad)
+    combo1:SetHeight(24)
+    combo1:SetValue("Choose loadout set for selection")
+    for _, v in pairs(sets) do
+        combo1:AddChoice(v)
+    end
+    combo1:AddChoice("<inherit>")
+    combo1:AddChoice("<default>")
+    combo1.OnSelect = function(_, _, name)
+        massPlysUnpack(3, "weaponsets_setloadout", name)
+        combo1:SetValue("Choose loadout set for selection")
+    end
+
+    -- Give loadout combobox
+    local combo2 = vgui.Create("DComboBox", rPan1)
+    combo2:Dock(TOP)
+    combo2:DockMargin(pad, pad, pad, pad)
+    combo2:SetHeight(24)
+    combo2:SetValue("Give set to selected players")
+    for _, v in pairs(sets) do
+        combo2:AddChoice(v)
+    end
+    combo2.OnSelect = function(_, _, name)
+	    massPlysUnpack(4, "weaponsets_give", name)
+        combo2:SetValue("Give set for selection")
+    end
+
+    function ls:OnRowRightClick(ind, line)
+        local acts = DermaMenu()
+        local subMenu1, _ = acts:AddSubMenu("Give a set...")
+        buildWeaponListMenu(subMenu1, function(name) massPlysUnpack(4, "weaponsets_give", name) end)
+        local subMenu2, _ = acts:AddSubMenu("Set as loadout...")
+        subMenu2:AddOption("<inherit>", function() massPlysUnpack(3, "weaponsets_setloadout", "<inherit>") end)
+        subMenu2:AddOption("<default>", function() massPlysUnpack(3, "weaponsets_setloadout", "<default>") end)
+        buildWeaponListMenu(subMenu2, function(name) massPlysUnpack(3, "weaponsets_setloadout", name) end)
+        acts:Open()
+    end
+
+    ---------------------
+    -- SteamID loadout --
+    ---------------------
+    local rPan2 = vgui.Create("DCollapsibleCategory", rPan)
+    rPan2:Dock(TOP)
+    rPan2:DockMargin(pad, pad, pad, pad)
+    rPan2:DockPadding(pad, pad, pad, pad)
+    rPan2:SetLabel("Loadout for offline players")
+
+    local e1 = vgui.Create("DTextEntry", rPan2)
+    e1:Dock(TOP)
+    e1:DockMargin(pad, pad, pad, pad)
+    e1:SetText("Player's SteamID")
+
+    -- Select loadout by steamid
+    local combo3 = vgui.Create("DComboBox", rPan2)
+    combo3:Dock(TOP)
+    combo3:DockMargin(pad, pad, pad, pad)
+    combo3:SetHeight(24)
+    combo3:SetValue("Choose loadout set for SteamID")
+    for _, v in pairs(sets) do
+        combo3:AddChoice(v)
+    end
+    combo3:AddChoice("<inherit>")
+    combo3:AddChoice("<default>")
+    combo3.OnSelect = function(_, _, name)
+        local id = e1:GetText()
+	    RunConsoleCommand("weaponsets_setloadout", name, id)
+        combo3:SetValue("Choose loadout set for SteamID")
+        e1:SetText("")
+    end
+
     return f
 end
