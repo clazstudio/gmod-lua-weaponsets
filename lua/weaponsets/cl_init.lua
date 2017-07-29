@@ -38,7 +38,9 @@ WEAPONSETS.NetFuncs.applyNewScale = function(data)
         ply:EnableMatrix("RenderMultiply", matrix)
         
         local r_min, r_max = ply:GetRenderBounds()
-        ply:SetRenderBounds(r_min * data.scale, r_max * data.scale)
+        local lastScale = ply.lastWepSetScale or 1
+        ply:SetRenderBounds(r_min * data.scale / lastScale, r_max * data.scale / lastScale)
+        ply.lastWepSetScale = data.scale
 
         if ply == LocalPlayer() then
             WEAPONSETS:SetPlayerSize(LocalPlayer(), data.scale) end
@@ -67,20 +69,6 @@ WEAPONSETS.NetFuncs.receiveList = function(data)
             WEAPONSETS.ModifyPanel.list:SelectFirstItem() end
     end
 end
-
--- properties.Add("weaponsets_give", {
---     MenuLabel = "Give an weapon set",
---     Order = 2600,
---     MenuIcon = "icon16/box.png",
---     Action = function(self, ent)
---         buildMenuWeaponsetsList(function(name) 
---             RunConsoleCommand("weaponsets_give", name, ent:UserID())
---         end):Open()
---     end,
---     Filter = function(self, ent, ply)
---         return IsValid(ent) and ent:IsPlayer()
---     end
--- })
 
 
 --[[---------------------------------------------------------

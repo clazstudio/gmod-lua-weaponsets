@@ -162,8 +162,8 @@ function WEAPONSETS:RestoreDefaults(ply)
     if ply.weaponsets_affected == nil or ply.weaponsets_defaults == nil then
         return self:SaveDefaults(ply)
     end
-    local tbl = ply.weaponsets_defaults
 
+    local tbl = ply.weaponsets_defaults
     ply:SetGravity(tbl.gravity)
     self:SetPlayerSize(ply, 1)
     ply:SetStepSize(tbl.step)
@@ -179,7 +179,7 @@ function WEAPONSETS:Give(ply, name)
         name = self.Convars["loadoutSet"]:GetString() end
     ply.lastWeaponSet = name
 
-    self:RestoreDefaults(ply)
+    if ply.weaponsets_affected then self:RestoreDefaults(ply) end
     if name == "<default>" then return false end
     
     local tbl = self:LoadFromFile(name)

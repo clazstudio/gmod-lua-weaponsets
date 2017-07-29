@@ -220,3 +220,49 @@ list.Set("DesktopWindows", "CLazWeaponSets", {
         popupMenu:Open()
     end
 })
+
+-- Sandbox context menu support
+properties.Add("weaponsets_give_property", {
+    MenuLabel = "Give an weapon set",
+    Order = 2600,
+    MenuIcon = "icon16/box.png",
+    Action = function(self, ent)
+        local pad = 2
+        local f = vgui.Create("DFrame")
+        f:SetTitle("Select a weapon set")
+        f:SetBackgroundBlur(true)
+        f:ShowCloseButton(true)
+        f:SetDeleteOnClose(true)
+        f:SetDraggable(true)
+        f:SetSizable(false)
+        f:DockPadding(0, 24, 0, 0)
+        f:SetSize(150, 200)
+        f:Center()
+        f:MakePopup()
+        f.Paint = function(_, w, h)
+            draw.RoundedBox(pad * 2, 0, 0, w, h, Color(38, 50, 56, 250))
+        end
+        local pan = vgui.Create("DScrollPanel", f)
+        pan:DockMargin(pad * 2, pad * 2, pad * 2, pad)
+        pan:Dock(FILL)
+        for _, name in pairs(WEAPONSETS.WeaponSetsList) do
+            local bt = vgui.Create("DButton")
+            bt:DockMargin(0, 0, 0, pad)
+            bt:Dock(TOP)
+            bt:SetText(name)
+            bt.DoClick = function() 
+                RunConsoleCommand("weaponsets_give", name, ent:UserID())
+                f:Close() 
+            end
+            pan:AddItem(bt)
+        end
+        local closeBt = vgui.Create("DButton", f)
+        closeBt:SetText("Cancel")
+        closeBt:DockMargin(pad * 2, pad * 3, pad * 2, pad * 2)
+        closeBt:Dock(BOTTOM)
+        closeBt.DoClick = function() f:Close() end
+    end,
+    Filter = function(self, ent, ply)
+        return IsValid(ent) and ent:IsPlayer()
+    end
+})
