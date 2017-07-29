@@ -38,9 +38,9 @@ WEAPONSETS.NetFuncs.applyNewScale = function(data)
         ply:EnableMatrix("RenderMultiply", matrix)
         
         local r_min, r_max = ply:GetRenderBounds()
-        local lastScale = ply.lastWepSetScale or 1
+        local lastScale = ply.weaponsets_lastscale or 1
         ply:SetRenderBounds(r_min * data.scale / lastScale, r_max * data.scale / lastScale)
-        ply.lastWepSetScale = data.scale
+        ply.weaponsets_lastscale = data.scale
 
         if ply == LocalPlayer() then
             WEAPONSETS:SetPlayerSize(LocalPlayer(), data.scale) end

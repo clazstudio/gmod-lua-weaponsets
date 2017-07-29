@@ -40,12 +40,12 @@ local function buildSettingsPanel(pan)
         end
         combo1:AddChoice("<default>")
     end
-    pan:Button("Refresh weapon sets list", "").DoClick = retrieveList
     pan:Help([[This set will be given for all players with "<inherit>" weapon set or without it on loadout]])
 
     pan:CheckBox("Only superadmins", "weaponsets_adminonly")
     pan:Help([[If enabled only superadmin will can give and edit weaponsets]])
 
+    pan:Button("Refresh weapon sets list", "").DoClick = retrieveList
     pan.combo1 = combo1
     WEAPONSETS.SettingsPanel = pan
 end
@@ -188,7 +188,9 @@ list.Set("DesktopWindows", "CLazWeaponSets", {
         end):SetIcon("icon16/application_side_list.png")
         popupMenu:AddSpacer()
         for _, name in pairs(WEAPONSETS.WeaponSetsList) do
-            local subMenu, _ = popupMenu:AddSubMenu(name)
+            local subMenu, _ = popupMenu:AddSubMenu(name, function() 
+                RunConsoleCommand("weaponsets_give", name, LocalPlayer():UserID())
+            end)
             subMenu:AddOption("Edit...", function() RunConsoleCommand("weaponsets", name) end):SetIcon("icon16/page_edit.png")
             subMenu:AddOption("Delete", function() 
                 deleteWeaponSetDialog(name, function() RunConsoleCommand("weaponsets_delete", name) end)
@@ -202,14 +204,6 @@ list.Set("DesktopWindows", "CLazWeaponSets", {
             subMenu:AddOption("Set as my loadout", function() 
                 RunConsoleCommand("weaponsets_setloadout", name, LocalPlayer():UserID()) 
             end)
-            -- local subMenu1, _ = subMenu:AddSubMenu("Give to...")
-            -- playersListMenu(subMenu1, function(ply)
-            --     RunConsoleCommand("weaponsets_give", name, ply and ply:UserID())
-            -- end)
-            -- local subMenu2, _ = subMenu:AddSubMenu("Set as loadout for...")
-            -- playersListMenu(subMenu2, function(ply)
-            --     RunConsoleCommand("weaponsets_setloadout", name, ply and ply:UserID())
-            -- end)
         end
         popupMenu:AddSpacer()
         popupMenu:AddOption("Add new weapon set...", function()

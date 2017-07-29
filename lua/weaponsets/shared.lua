@@ -97,11 +97,10 @@ end
 --[[---------------------------------------------------------
     Resizes a player
 ---------------------------------------------------------]]--
-
 function WEAPONSETS:SetPlayerSize(ply, scale)
     ply:SetViewOffset(Vector(0, 0, 64) * scale)
     ply:SetViewOffsetDucked(Vector(0, 0, 28) * scale)
-    --ply:SetModelScale(scale, 0)
+    --ply:SetModelScale(scale, 0) -- Broken
 
     ply:ResetHull()
     if scale != 1 then
@@ -112,7 +111,11 @@ function WEAPONSETS:SetPlayerSize(ply, scale)
     end
 
     if SERVER then
+        -- local lastScale = ply.weaponsets_lastscale or 1
+        print(ply:GetStepSize())
         ply:SetStepSize(ply:GetStepSize() * scale)
+        print(ply:GetStepSize())
+        -- ply.weaponsets_lastscale = scale
 
         net.Start("wepsetsToCl")
             net.WriteString("applyNewScale")

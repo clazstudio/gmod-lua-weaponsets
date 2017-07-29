@@ -7,7 +7,7 @@ include("weaponsets/player.lua")
 include("weaponsets/commands.lua")
 
 WEAPONSETS.PasteBinSets = "Q72iy08U"
-WEAPONSETS.Version = "18.11.16"
+WEAPONSETS.Version = "29.07.2017-pre2"
 
 WEAPONSETS.Convars = {
     ["loadoutSet"] = CreateConVar("weaponsets_loadoutset", "<default>", { FCVAR_REPLICATED, FCVAR_ARCHIVE }, 
@@ -75,7 +75,7 @@ function WEAPONSETS:SaveToFile(name, tbl)
 
     if lastLoadedName == name then 
         lastLoadedTable = tbl end
-    file.Write(path, util.TableToJSON(tbl, true))
+    file.Write(path, util.TableToJSON(tbl))
     return exists
 end
 
@@ -151,6 +151,9 @@ function WEAPONSETS:SaveDefaults(ply)
     tbl.step = ply:GetStepSize()
 
     ply.weaponsets_defaults = tbl
+    ply.weaponsets_affected = false
+    print("saved")
+    PrintTable(tbl)
 end
 
 
@@ -158,15 +161,19 @@ end
     Restore default multipliers values
 ---------------------------------------------------------]]--
 function WEAPONSETS:RestoreDefaults(ply)
-    ply.weaponsets_affected = false
     if ply.weaponsets_affected == nil or ply.weaponsets_defaults == nil then
         return self:SaveDefaults(ply)
     end
-
+    if !ply.weaponsets_affected then return false end
     local tbl = ply.weaponsets_defaults
+
     ply:SetGravity(tbl.gravity)
     self:SetPlayerSize(ply, 1)
     ply:SetStepSize(tbl.step)
+
+    ply.weaponsets_affected = false
+    print("restored")
+    PrintTable(tbl)
 end
 
 
@@ -179,7 +186,7 @@ function WEAPONSETS:Give(ply, name)
         name = self.Convars["loadoutSet"]:GetString() end
     ply.lastWeaponSet = name
 
-    if ply.weaponsets_affected then self:RestoreDefaults(ply) end
+    self:RestoreDefaults(ply)
     if name == "<default>" then return false end
     
     local tbl = self:LoadFromFile(name)
@@ -302,14 +309,13 @@ function WEAPONSETS:Upgrade()
             local sets = self:GetList()
             for _, name in pairs(sets) do
                 local tbl = self:LoadFromFile(name)
-                name, tbl = self:ValidateWeaponSet(name, tbl)
-                self:SaveToFile(name, set)
+                self:SaveToFile(self:ValidateWeaponSet(name, tbl))
                 print("[WeaponSets] Validated: " .. name)
             end
         end 
     end
 
-    timer.Simple(5, function() WEAPONSETS:Download() end)
+    --timer.Simple(5, function() WEAPONSETS:Download() end)
     file.Write("weaponsets_version.txt", self.Version)
 end
 
