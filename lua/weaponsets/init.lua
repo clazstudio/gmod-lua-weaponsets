@@ -7,7 +7,7 @@ include("weaponsets/player.lua")
 include("weaponsets/commands.lua")
 
 WEAPONSETS.PasteBinSets = "Q72iy08U"
-WEAPONSETS.Version = "29.07.2017-pre2"
+WEAPONSETS.Version = "29.07.2017"
 
 WEAPONSETS.Convars = {
     ["loadoutSet"] = CreateConVar("weaponsets_loadoutset", "<default>", { FCVAR_REPLICATED, FCVAR_ARCHIVE }, 
@@ -274,7 +274,7 @@ function WEAPONSETS:Download()
                 local set = util.JSONToTable(json)
                 if set == nil then return false end
                 self:SaveToFile(name, set)
-                print("[WeaponSets] Downloaded: " .. set.name)
+                print("[WeaponSets] Downloaded: " .. name)
             end)
         end
     end)
@@ -311,7 +311,7 @@ function WEAPONSETS:Upgrade()
         end 
     end
 
-    --timer.Simple(5, function() WEAPONSETS:Download() end)
+    timer.Simple(5, function() WEAPONSETS:Download() end)
     file.Write("weaponsets_version.txt", self.Version)
 end
 
