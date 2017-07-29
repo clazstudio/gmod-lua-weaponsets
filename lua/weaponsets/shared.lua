@@ -111,11 +111,7 @@ function WEAPONSETS:SetPlayerSize(ply, scale)
     end
 
     if SERVER then
-        -- local lastScale = ply.weaponsets_lastscale or 1
-        print(ply:GetStepSize())
         ply:SetStepSize(ply:GetStepSize() * scale)
-        print(ply:GetStepSize())
-        -- ply.weaponsets_lastscale = scale
 
         net.Start("wepsetsToCl")
             net.WriteString("applyNewScale")

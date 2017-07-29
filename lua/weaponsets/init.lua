@@ -152,8 +152,6 @@ function WEAPONSETS:SaveDefaults(ply)
 
     ply.weaponsets_defaults = tbl
     ply.weaponsets_affected = false
-    print("saved")
-    PrintTable(tbl)
 end
 
 
@@ -172,8 +170,6 @@ function WEAPONSETS:RestoreDefaults(ply)
     ply:SetStepSize(tbl.step)
 
     ply.weaponsets_affected = false
-    print("restored")
-    PrintTable(tbl)
 end
 
 
