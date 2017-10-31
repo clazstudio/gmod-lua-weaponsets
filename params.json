@@ -1,6 +1,0 @@
-{
-  "name": "Gmod-lua-weaponsets",
-  "tagline": "Garry's mod addon. It adds to game weapon and ammunition sets (kits).",
-  "body": "# [Garry's mod Lua] Weapon Sets\r\nGarry's mod addon. It adds to game weapon and ammunition sets (kits).\r\n[This addon also available in steam workshop!](http://steamcommunity.com/sharedfiles/filedetails/?id=523399678)\r\n\r\n##Installation:\r\n1. Download the zip file of this repository (or clone it)\r\n2. Copy `gmod-lua-weaponsets-master` into your `GarrysMod\\garrysmod\\addons\\` directory\r\n3. Run (or restart) Garry's mod\r\n",
-  "note": "Don't delete this file! It's used internally to help with page regeneration."
-}
