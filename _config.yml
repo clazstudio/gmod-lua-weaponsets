@@ -1,5 +1,5 @@
-title: Gmod-lua-weaponsets
-description: Garry's mod addon. It adds to game weapon and ammunition sets (kits).
+title: [glua] Weapon Sets
+description: This addon allows you to create, edit and give sets (kits) of weapons and ammunitions and change player's loadout set.
 google_analytics: 
 show_downloads: true
 theme: jekyll-theme-minimal
