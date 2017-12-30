@@ -13,7 +13,9 @@ WEAPONSETS.Convars = {
     ["loadoutSet"] = CreateConVar("weaponsets_loadoutset", "<default>", { FCVAR_REPLICATED, FCVAR_ARCHIVE }, 
                                   "Loadout weapon set for all players"),
     ["adminOnly"] = CreateConVar("weaponsets_adminonly", "1", { FCVAR_REPLICATED, FCVAR_NOTIFY, FCVAR_ARCHIVE }, 
-                                 "If enabled only superadmin can give and edit weaponsets")
+                                 "If enabled only superadmin can give and edit weaponsets"),
+    ["deathmatch"] = CreateConVar("weaponsets_deathmatch", "0", { FCVAR_REPLICATED, FCVAR_NOTIFY, FCVAR_ARCHIVE }, 
+                                 "If enabled all players will can choose loadout set.")
 }
 
 util.AddNetworkString("wepsetsToSv")
@@ -335,6 +337,15 @@ WEAPONSETS.NetFuncs.retrieveList = function(ply, data)
     end
 end
 
+-- Select DM loadout
+WEAPONSETS.NetFuncs.selectLoadout = function(ply, data)
+    if WEAPONSETS.Convars["deathmatch"]:GetBool() and IsValid(ply) then
+        ply:SetWeaponSet(data.name or "<inherit>")
+        ply:KillSilent();
+        ply:Spawn()
+    end
+end
+
 
 --[[---------------------------------------------------------
     Hooks
@@ -362,4 +373,13 @@ end)
 -- Player initial spawn hook
 hook.Add("PlayerInitialSpawn", "weaponsets_PlayerInitialSpawn", function(ply)
 	WEAPONSETS.NetFuncs.retrieveList(ply)
+end)
+
+-- ShowTeam hook
+hook.Add("ShowTeam", "weaponsets_ShowTeam", function(ply)
+    if WEAPONSETS.Convars["deathmatch"]:GetBool() then
+        net.Start("wepsetsToCl")
+        net.WriteString("openTeamMenu")
+        net.Send(ply)
+    end
 end)

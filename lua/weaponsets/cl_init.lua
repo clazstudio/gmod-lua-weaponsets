@@ -70,6 +70,53 @@ WEAPONSETS.NetFuncs.receiveList = function(data)
     end
 end
 
+WEAPONSETS.NetFuncs.openTeamMenu = function(data)
+    local pad = 16
+    local f = vgui.Create("DFrame")
+    f:SetTitle("")
+    f:SetBackgroundBlur(true)
+    f:ShowCloseButton(false)
+    f:SetDeleteOnClose(true)
+    f:SetDraggable(false)
+    f:SetSizable(false)
+    f:DockPadding(0, pad * 4, 0, 0)
+    f:Dock(FILL)
+    f:Center()
+    f:MakePopup()
+    f.Paint = function(_, w, h)
+        surface.SetDrawColor(38, 50, 56, 250)
+        surface.DrawRect(0, 0, w, h)
+        draw.SimpleText("Select a loadout set", "DermaLarge", w / 2, pad * 2, 
+                        Color(255, 255, 255, 255), TEXT_ALIGN_CENTER);
+    end
+    local pan = vgui.Create("DScrollPanel", f)
+    pan:DockMargin(pad * 4, pad * 2, pad * 4, pad)
+    pan:Dock(FILL)
+    for _, name in pairs(WEAPONSETS.WeaponSetsList) do
+        local bt = vgui.Create("DButton")
+        bt:DockMargin(0, 0, 0, pad)
+        bt:Dock(TOP)
+        bt:SetText(name)
+        bt:SetHeight(pad * 2)
+        bt:SetFont("DermaLarge")
+        bt.DoClick = function() 
+            net.Start("wepsetsToSv")
+                net.WriteString("selectLoadout")
+                net.WriteTable({ name = name })
+            net.SendToServer()
+            f:Close() 
+        end
+        pan:AddItem(bt)
+    end
+    local closeBt = vgui.Create("DButton", f)
+    closeBt:SetText("#cancel")
+    closeBt:DockMargin(pad * 4, pad * 3, pad * 4, pad * 2)
+    closeBt:Dock(BOTTOM)
+    closeBt:SetHeight(pad * 3)
+    closeBt:SetFont("DermaLarge")
+    closeBt.DoClick = function() f:Close() end
+end
+
 
 --[[---------------------------------------------------------
     Hooks

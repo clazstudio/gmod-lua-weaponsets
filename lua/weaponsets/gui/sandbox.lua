@@ -45,6 +45,9 @@ local function buildSettingsPanel(pan)
     pan:CheckBox("Only superadmins", "weaponsets_adminonly")
     pan:Help([[If enabled only superadmin will can give and edit weaponsets]])
 
+    pan:CheckBox("Deathmatch mode", "weaponsets_deathmatch")
+    pan:Help([[If enabled all players will can choose loadout set]])
+
     pan:Button("Refresh weapon sets list", "").DoClick = retrieveList
     pan.combo1 = combo1
     WEAPONSETS.SettingsPanel = pan
