@@ -7,7 +7,7 @@ include("weaponsets/player.lua")
 include("weaponsets/commands.lua")
 
 WEAPONSETS.PasteBinSets = "Q72iy08U"
-WEAPONSETS.Version = "29.07.2017"
+WEAPONSETS.Version = "30.12.2017"
 
 WEAPONSETS.Convars = {
     ["loadoutSet"] = CreateConVar("weaponsets_loadoutset", "<default>", { FCVAR_REPLICATED, FCVAR_ARCHIVE }, 
