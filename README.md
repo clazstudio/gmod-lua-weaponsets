@@ -6,17 +6,18 @@ This addon allows you to create, edit and give sets (kits) of weapons and ammuni
 2. Copy `gmod-lua-weaponsets-master` into your `GarrysMod\garrysmod\addons\` directory
 3. Run (or restart) Garry's mod
 
-## Places in Sandbox gamemode
-Tool menu: **Q -> Utilities -> Weapon sets**<br/>
+## Features
+
+### Tool menu: **Q -> Utilities -> Weapon sets**
 ![Screenshot of sandbox menu](https://steamuserimages-a.akamaihd.net/ugc/842589110371303061/C745122E795E1F9FF1140F92B948FD61A4A4BF71/)
 
-Sandbox desktop: **C -> Weaponsets** (left-top corner)<br/>
+### Sandbox desktop: **C -> Weaponsets** (left-top corner)
 ![Screenshot of sandbox desktop](https://steamuserimages-a.akamaihd.net/ugc/842589193401016289/B6762C22D58C443E1D89B9E2B9BBF07B5567AD5C/)
 
-Right click on player<br/>
+### Right click on player
 ![Right click screenshot](https://steamuserimages-a.akamaihd.net/ugc/842589110371305024/D7A448B2EEFB42F0AE8EA130923A5FDB01407E99/)
 
-### Console commands
+## Console commands
 - `weaponsets` - Print sets list in server console
 - `weaponsets <set_name>` - Edit a set
 - `weaponsets_delete <set_name>` - Delete a set
@@ -26,9 +27,9 @@ Right click on player<br/>
 - `weaponsets_setloadout <set_name> <UserID1> ...` - Set as loadout set for player(s)*
 _*You can get player's UserID by typing status concommand_
 
-### Convars:
+## Convars:
 - `weaponsets_loadoutset "<default>"` - Loadout weapon set for all players
 - `weaponsets_adminonly "1"` - If enabled only superadmin can give and edit weaponsets
-
+- `weaponsets_deathmatch "0"` - If enabled all players will can choose loadout set (F2)
 
 Steam workshop page: http://steamcommunity.com/sharedfiles/filedetails/?id=523399678
