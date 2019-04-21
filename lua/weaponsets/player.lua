@@ -1,7 +1,6 @@
 --[[---------------------------------------------------------
     SERVER - player.lua
----------------------------------------------------------]]--
-
+-----------------------------------------------------------]]
 local meta = FindMetaTable("Player")
 
 -- Gets player's loadout weapon set
@@ -17,5 +16,6 @@ end
 -- Gives player a weapon set
 function meta:GiveWeaponSet(name)
     name = name or self:GetWeaponSet()
+
     return WEAPONSETS:Give(self, name)
 end

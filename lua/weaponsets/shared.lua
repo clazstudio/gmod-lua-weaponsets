@@ -1,6 +1,6 @@
 --[[---------------------------------------------------------
     SHARED
----------------------------------------------------------]]--
+-----------------------------------------------------------]]
 
 -- Blood enums with description
 WEAPONSETS.BloodEnums = {
@@ -15,10 +15,9 @@ WEAPONSETS.BloodEnums = {
     [BLOOD_COLOR_ANTLION_WORKER] = "Bright green blood"
 }
 
-
 --[[---------------------------------------------------------
     Empty weapon set structure
----------------------------------------------------------]]--
+----------------------------------------------------------]]
 local emptySet = {
     stripweapons = false,
     stripammo = false,
@@ -41,25 +40,35 @@ function WEAPONSETS:GetEmptySet()
     return table.Copy(emptySet)
 end
 
-
 -- Weapon set structure validation
 local validateKeyFuncs = {
-    stripweapons = tobool, stripammo = tobool, allowflashlight = tobool, dropweapons = tobool,
-    health = tonumber, armor = tonumber, maxhealth = tonumber, jump = tonumber,
-    gravity = tonumber, speed = tonumber, opacity = tonumber, blood = tonumber, 
-    friction = tonumber, scale = tonumber
+    stripweapons = tobool,
+    stripammo = tobool,
+    allowflashlight = tobool,
+    dropweapons = tobool,
+    health = tonumber,
+    armor = tonumber,
+    maxhealth = tonumber,
+    jump = tonumber,
+    gravity = tonumber,
+    speed = tonumber,
+    opacity = tonumber,
+    blood = tonumber,
+    friction = tonumber,
+    scale = tonumber
 }
+
 function WEAPONSETS:ValidateWeaponSet(name, tbl)
     name = self:FormatFileName(name or "unnamed")
     local empty = self:GetEmptySet()
-
-    if !tbl or !istable(tbl) then return name, empty end
+    if not tbl or not istable(tbl) then return name, empty end
 
     for k, v in pairs(empty) do
-        if tbl[k] == nil then 
+        if tbl[k] == nil then
             tbl[k] = v
         elseif validateKeyFuncs[k] then
             local valid = validateKeyFuncs[k](tbl[k])
+
             if valid == nil then
                 tbl[k] = v
             else
@@ -68,42 +77,45 @@ function WEAPONSETS:ValidateWeaponSet(name, tbl)
         end
     end
 
-    if !tbl.set or !istable(tbl.set) then
-        tbl.set = {} end
-    
+    if not tbl.set or not istable(tbl.set) then
+        tbl.set = {}
+    end
+
     local set = {}
+
     for k, v in pairs(tbl.set) do
         local key = tostring(k)
         local val = tonumber(v) or -1
-        if val <= 0 and game.GetAmmoID(key) != -1 then
-            continue end
+        if val <= 0 and game.GetAmmoID(key) ~= -1 then continue end
         set[key] = val
     end
 
     return name, tbl
 end
 
-
--- Filename formatter 
+-- Filename formatter
 function WEAPONSETS:FormatFileName(text)
     text = string.Replace(string.lower(text), " ", "_")
     text = string.Replace(text, ".", "_")
-    text = string.gsub(text, '[\\/:%*%?"<>,;|]', "")
-    if text == "" then text = "unnamed" end
+    text = string.gsub(text, [[\\/:%*%?"<>,;'|]], "")
+
+    if text == "" then
+        text = "unnamed"
+    end
+
     return text
 end
 
-
 --[[---------------------------------------------------------
     Resizes a player
----------------------------------------------------------]]--
+-----------------------------------------------------------]]
 function WEAPONSETS:SetPlayerSize(ply, scale)
     ply:SetViewOffset(Vector(0, 0, 64) * scale)
     ply:SetViewOffsetDucked(Vector(0, 0, 28) * scale)
     --ply:SetModelScale(scale, 0) -- Broken
-
     ply:ResetHull()
-    if scale != 1 then
+
+    if scale ~= 1 then
         local h_b, h_t = ply:GetHull()
         local d_b, d_t = ply:GetHullDuck()
         ply:SetHull(h_b * scale, h_t * scale)
@@ -112,10 +124,14 @@ function WEAPONSETS:SetPlayerSize(ply, scale)
 
     if SERVER then
         ply:SetStepSize(ply:GetStepSize() * scale)
-
         net.Start("wepsetsToCl")
-            net.WriteString("applyNewScale")
-            net.WriteTable({ scale = scale, ply = ply:UserID() })
+        net.WriteString("applyNewScale")
+
+        net.WriteTable({
+            scale = scale,
+            ply = ply:UserID()
+        })
+
         net.Broadcast()
     end
 end

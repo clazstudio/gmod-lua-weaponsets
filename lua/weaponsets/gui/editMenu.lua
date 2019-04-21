@@ -1,59 +1,62 @@
 local FILL_MODE_ALL = 1
 local FILL_MODE_ADDED = 2
 local FILL_MODE_NOT_ADDED = 3
-
 local WEP_PANEL_COLOR_IN = Color(200, 230, 201)
 local WEP_PANEL_COLOR_OUT = Color(255, 205, 210)
 
 -- TODO
-local function getCategorizedWeaponList(tbl)
+--[[local function getCategorizedWeaponList(tbl)
     local wepList = list.Get("Weapon")
     local catList = {}
 
     for class, wep in pairs(list.Get("Weapon")) do
-        if !wep.Spawnable then continue end
-
+        if not wep.Spawnable then continue end
         local cat = wep.Category or 'Uncategorized'
         catList[cat] = catList[cat] or {}
-        table.insert(catList[cat], { 
+
+        table.insert(catList[cat], {
             ["name"] = wep.PrintName or class,
             ["inSet"] = tbl.set[class] ~= nil
         })
     end
 
     wepList = nil
+
     return catList
-end
+end]]
 
 --[[---------------------------------------------------------
     GUI - Weapon sets edit window
----------------------------------------------------------]]--
+-----------------------------------------------------------]]
 function WEAPONSETS:OpenEditMenu(name, tbl)
     name, tbl = self:ValidateWeaponSet(name, tbl)
     local pad = 2 -- = padding/2 = margin/2
-
     local wepList = {}
     local ammoList = {}
-    
+
     for i = 1, 128 do
-        local name = game.GetAmmoName(i)
-        if !name then break end
-        ammoList[name] = 0
+        local ammoMame = game.GetAmmoName(i)
+        if not ammoMame then break end
+        ammoList[ammoMame] = 0
     end
 
     for k, v in pairs(list.Get("Weapon")) do
-    	if !v.Spawnable then continue end
-    	wepList[k] = { 
+        if not v.Spawnable then continue end
+
+        wepList[k] = {
             ["name"] = v.PrintName or k,
-            ["inSet"] = tbl.set[k] != nil 
+            ["inSet"] = tbl.set[k] ~= nil
         }
     end
 
     for k, v in pairs(tbl.set) do
-    	if tonumber(v) >= 0 then
+        if tonumber(v) >= 0 then
             ammoList[k] = tonumber(v)
-        elseif !wepList[k] then
-            wepList[k] = { name = k, inSet = true }
+        elseif not wepList[k] then
+            wepList[k] = {
+                name = k,
+                inSet = true
+            }
         end
     end
 
@@ -73,12 +76,14 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
 
     -- Minimize and maximize buttons
     f.btnMinim:SetEnabled(true)
-    f.btnMinim.DoClick = function() 
+
+    f.btnMinim.DoClick = function()
         f:SetKeyboardInputEnabled(false)
         f.btnMinim:SetEnabled(false)
         f.btnMaxim:SetEnabled(true)
     end
-    f.btnMaxim.DoClick = function() 
+
+    f.btnMaxim.DoClick = function()
         f:SetKeyboardInputEnabled(true)
         f.btnMinim:SetEnabled(true)
         f.btnMaxim:SetEnabled(false)
@@ -90,10 +95,9 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
     sheet:DockPadding(pad, pad, pad, pad)
     sheet:Dock(FILL)
 
-
     ----------------[[ WEAPONS LIST PANEL ]]----------------
     local wepListPan = vgui.Create("DPanel", sheet)
-    wepListPan:SetDrawBackground(false)
+    wepListPan:SetPaintBackground(false)
     sheet:AddSheet("Weapons", wepListPan, "icon16/text_list_bullets.png")
 
     -- Panel with weapons list
@@ -102,31 +106,31 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
     wepScroll:Dock(FILL)
 
     -- Panel with weapon information
-    local function buildWeaponPanel(class, tbl)
+    local function buildWeaponPanel(class, weaponTable)
         local p = vgui.Create("DButton")
-        p.inSet = tbl.inSet
-        p.col = p.inSet and WEP_PANEL_COLOR_IN or WEP_PANEL_COLOR_OUT
         p:DockMargin(0, pad, 0, pad)
         p:SetHeight(64)
-        p:SetText("");
+        p:SetText("")
         p:Dock(TOP)
 
         p.DoClick = function()
-            p.inSet = !p.inSet
-            wepList[class].inSet = p.inSet
-            p.col = p.inSet and WEP_PANEL_COLOR_IN or WEP_PANEL_COLOR_OUT
+            weaponTable.inSet = not weaponTable.inSet
+            wepList[class].inSet = weaponTable.inSet
         end
 
         function p:Paint(w, h)
-            draw.RoundedBox(pad * 2, 0, 0, w, h, p.col)
-            draw.SimpleText(tbl.name, "DermaLarge", 64 + pad * 4, pad * 2, Color(50, 50, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
-            draw.SimpleText(class, "Trebuchet18", 64 + pad * 4, 32 + pad * 3, Color(50, 50, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+            local color = weaponTable.inSet and WEP_PANEL_COLOR_IN or WEP_PANEL_COLOR_OUT
+            draw.RoundedBox(pad * 2, 0, 0, w, h, color)
+            draw.SimpleText(weaponTable.name, "DermaLarge", 64 + pad * 4, pad * 2,
+                Color(50, 50, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+            draw.SimpleText(class, "Trebuchet18", 64 + pad * 4, 32 + pad * 3,
+                Color(50, 50, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
         end
 
         local img = vgui.Create("DImage", p)
         img:SetPos(0, 0)
         img:SetSize(64, 64)
-        img:SetImage( "entities/" .. class .. ".png", "vgui/avatar_default" )
+        img:SetImage("entities/" .. class .. ".png", "vgui/avatar_default")
 
         return p
     end
@@ -137,9 +141,8 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
 
         for k, v in SortedPairsByMemberValue(wepList, "name") do
             if v.inSet and fillMode == FILL_MODE_NOT_ADDED then continue end
-            if !v.inSet and fillMode == FILL_MODE_ADDED then continue end
+            if not v.inSet and fillMode == FILL_MODE_ADDED then continue end
             if filter and string.find(string.lower(v.name .. " " .. k), filter) == nil then continue end
-
             wepScroll:AddItem(buildWeaponPanel(k, v))
         end
     end
@@ -149,7 +152,7 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
 
     -- top weapon panel
     local wepTopPan = vgui.Create("DPanel", wepListPan)
-    wepTopPan:SetDrawBackground(false)
+    wepTopPan:SetPaintBackground(false)
     wepTopPan:DockMargin(pad, pad, pad, pad)
     wepTopPan:SetHeight(20)
     wepTopPan:Dock(TOP)
@@ -161,6 +164,7 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
     wepShowCombo:AddChoice("Show all", FILL_MODE_ALL, true)
     wepShowCombo:AddChoice("Show only added", FILL_MODE_ADDED)
     wepShowCombo:AddChoice("Show not added", FILL_MODE_NOT_ADDED)
+
     wepShowCombo.OnSelect = function(_, _, _, fillMode)
         lastFillMode = fillMode
         fillWepScroll(lastFillMode, lastFilter)
@@ -170,9 +174,10 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
     local wepSearchEdit = vgui.Create("DTextEntry", wepTopPan)
     wepSearchEdit:Dock(FILL)
     wepSearchEdit:SetPlaceholderText("Search by name or class")
-    wepSearchEdit:DockMargin(pad * 2, 0 , pad * 2, 0)
-    wepSearchEdit.OnEnter = function(self)
-        lastFilter = string.lower(self:GetValue())
+    wepSearchEdit:DockMargin(pad * 2, 0, pad * 2, 0)
+
+    wepSearchEdit.OnEnter = function(inp)
+        lastFilter = string.lower(inp:GetValue())
         fillWepScroll(lastFillMode, lastFilter)
     end
 
@@ -181,12 +186,16 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
     wepCustomBt:SetText("Add weapon manually")
     wepCustomBt:SetWide(144)
     wepCustomBt:Dock(LEFT)
+
     wepCustomBt.DoClick = function()
         Derma_StringRequest("Manual weapon adding", "Please, enter weapon classname", "weapon_crowbar", function(val)
             if wepList[val] then
                 wepList[val].inSet = true
             else
-                wepList[val] = { name = "Manually added", inSet = true }
+                wepList[val] = {
+                    name = "Manually added",
+                    inSet = true
+                }
             end
 
             local _, fm = wepShowCombo:GetSelected()
@@ -198,179 +207,199 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
 
     ----------------[[ AMMOES LIST PANEL ]]----------------
     local ammoListPan = vgui.Create("DPanel", sheet)
-    ammoListPan:SetDrawBackground(false)
+    ammoListPan:SetPaintBackground(false)
     sheet:AddSheet("Ammoes", ammoListPan, "icon16/box.png")
-
     local ammoListProp = vgui.Create("DProperties", ammoListPan)
     ammoListProp:DockMargin(pad, pad, pad, pad)
     ammoListProp:Dock(FILL)
 
     local function fillAmmoList()
         ammoListProp:Clear()
+
         for k, v in pairs(ammoList) do
-            local category = v == 0 and "Not in set" or "In set" 
+            local category = v == 0 and "Not in set" or "In set"
             local row = ammoListProp:CreateRow(category, k)
-            row:Setup("Int", { min = 0, max = 1000 })
+
+            row:Setup("Int", {
+                min = 0,
+                max = 1000
+            })
+
             row:SetValue(v)
+
             row.DataChanged = function(_, val)
                 ammoList[k] = val
             end
         end
     end
+
     fillAmmoList()
-    
     local ammoCustomBt = vgui.Create("DButton", ammoListPan)
     ammoCustomBt:DockMargin(pad, pad, pad, pad)
     ammoCustomBt:SetText("Add ammo manually")
     ammoCustomBt:Dock(BOTTOM)
+
     ammoCustomBt.DoClick = function()
         Derma_StringRequest("Manual ammo adding", "Please, enter an ammo name", "Pistol", function(ammoName)
-        Derma_StringRequest("Manual ammo adding", "Enter ammo count:", "0", function(ammoCount)
-            ammoCount = tonumber(ammoCount) or 0
-            if ammoCount < 1 or ammoName == "" then return end
-            if game.GetAmmoID(ammoName) == -1 then
-                Derma_Message("Unknown for game engine ammo name!", "Manual ammo adding", "Ok")
-            end
-            ammoList[ammoName] = ammoCount
-            fillAmmoList()
-        end, nil, "Add it!", "Cancel")
+            Derma_StringRequest("Manual ammo adding", "Enter ammo count:", "0", function(ammoCount)
+                ammoCount = tonumber(ammoCount) or 0
+                if ammoCount < 1 or ammoName == "" then return end
+
+                if game.GetAmmoID(ammoName) == -1 then
+                    Derma_Message("Unknown for game engine ammo name!", "Manual ammo adding", "Ok")
+                end
+
+                ammoList[ammoName] = ammoCount
+                fillAmmoList()
+            end, nil, "Add it!", "Cancel")
         end, nil, "Ok", "Cancel")
     end
 
     ----------------[[ PLAYER SETTINGS PANEL ]]----------------
     local plySetPan = vgui.Create("DPanel", sheet)
-    plySetPan:SetDrawBackground(false)
+    plySetPan:SetPaintBackground(false)
     sheet:AddSheet("Player settings", plySetPan, "icon16/user_edit.png")
 
     -- Tree
-    local plyProp = vgui.Create( "DProperties", plySetPan )
-    plyProp:DockMargin( pad, pad, pad, pad )
-    plyProp:Dock( FILL )
+    local plyProp = vgui.Create("DProperties", plySetPan)
+    plyProp:DockMargin(pad, pad, pad, pad)
+    plyProp:Dock(FILL)
 
     -- Weapon strip row
-    local plyRow1 = plyProp:CreateRow( "Booleans", "Strip weapons before giving" )
-    plyRow1:Setup( "Boolean" )
-    plyRow1:SetValue( tbl.stripweapons == true and 1 or 0 )
-    plyRow1.DataChanged = function( _, val )
+    local plyRow1 = plyProp:CreateRow("Booleans", "Strip weapons before giving")
+    plyRow1:Setup("Boolean")
+    plyRow1:SetValue(tbl.stripweapons == true and 1 or 0)
+
+    plyRow1.DataChanged = function(_, val)
         tbl.stripweapons = val
     end
 
     -- Ammo strip row
-    local plyRow2 = plyProp:CreateRow( "Booleans", "Strip ammo before giving" )
-    plyRow2:Setup( "Boolean" )
-    plyRow2:SetValue( tbl.stripammo == true and 1 or 0 )
-    plyRow2.DataChanged = function( _, val )
+    local plyRow2 = plyProp:CreateRow("Booleans", "Strip ammo before giving")
+    plyRow2:Setup("Boolean")
+    plyRow2:SetValue(tbl.stripammo == true and 1 or 0)
+
+    plyRow2.DataChanged = function(_, val)
         tbl.stripammo = val
     end
 
     -- Flashlight row
-    local plyRow3 = plyProp:CreateRow( "Booleans", "Allow flashlight" )
-    plyRow3:Setup( "Boolean" )
-    plyRow3:SetValue( tbl.allowflashlight == true and 1 or 0 )
-    plyRow3.DataChanged = function( _, val )
+    local plyRow3 = plyProp:CreateRow("Booleans", "Allow flashlight")
+    plyRow3:Setup("Boolean")
+    plyRow3:SetValue(tbl.allowflashlight == true and 1 or 0)
+
+    plyRow3.DataChanged = function(_, val)
         tbl.allowflashlight = val
     end
 
     -- Drop weapons on death row
-    local plyRowBool4 = plyProp:CreateRow( "Booleans", "Drop weapons on death" )
-    plyRowBool4:Setup( "Boolean" )
-    plyRowBool4:SetValue( tbl.dropweapons == true and 1 or 0 )
-    plyRowBool4.DataChanged = function( _, val )
+    local plyRowBool4 = plyProp:CreateRow("Booleans", "Drop weapons on death")
+    plyRowBool4:Setup("Boolean")
+    plyRowBool4:SetValue(tbl.dropweapons == true and 1 or 0)
+
+    plyRowBool4.DataChanged = function(_, val)
         tbl.dropweapons = val
     end
 
     -- Number rows
-    local function numRow( cat, text, typ, def, min, max, func )
-        local row = plyProp:CreateRow( cat, text )
-        row:Setup( typ, { min = min, max = max } )
-        row:SetValue( def or min )
-        row.DataChanged = function( _, val )
+    local function numRow(cat, text, typ, def, min, max, func)
+        local row = plyProp:CreateRow(cat, text)
+
+        row:Setup(typ, {
+            min = min,
+            max = max
+        })
+
+        row:SetValue(def or min)
+
+        row.DataChanged = function(_, val)
             --val = math.min( val, max )
-            val = math.max( val, min )
-            if ( func != nil ) then
-                func( val ) end
+            val = math.max(val, min)
+
+            if (func ~= nil) then
+                func(val)
+            end
         end
     end
 
     -- Health row
-    local plyRow4 = numRow( "Numbers", "Health (-1 = don't change)", "Int",
-                            tbl.health, -1, 2147483647, function( val )
-        tbl.health = val;
-    end )
+    numRow("Numbers", "Health (-1 = don't change)", "Int", tbl.health, -1, 2147483647, function(val)
+        tbl.health = val
+    end)
 
     -- MaxHealth row
-    local plyRow5 = numRow( "Numbers", "Max health (or -1)", "Int",
-                            tbl.maxhealth, -1, 2147483647, function( val )
-        tbl.maxhealth = val;
-    end )
+    numRow("Numbers", "Max health (or -1)", "Int", tbl.maxhealth, -1, 2147483647, function(val)
+        tbl.maxhealth = val
+    end)
 
     -- Armor row
-    local plyRow6 = numRow( "Numbers", "Armor (or -1)", "Int",
-                            tbl.armor, -1, 255, function( val )
-        tbl.armor = val;
-    end )
+    numRow("Numbers", "Armor (or -1)", "Int", tbl.armor, -1, 255, function(val)
+        tbl.armor = val
+    end)
 
     -- Jump row
-    local plyRow7 = numRow( "Numbers", "Jump power (or -1)", "Int",
-                            tbl.jump, -1, 10000, function( val )
-        tbl.jump = val;
-    end )
+    numRow("Numbers", "Jump power (or -1)", "Int", tbl.jump, -1, 10000, function(val)
+        tbl.jump = val
+    end)
 
     -- Gravity row
-    local plyRow8 = numRow( "Numbers", "Gravity (def. 1)", "Float",
-                            tbl.gravity or 1, 0, 10, function( val )
-        tbl.gravity = val;
-    end )
+    numRow("Numbers", "Gravity (def. 1)", "Float", tbl.gravity or 1, 0, 10, function(val)
+        tbl.gravity = val
+    end)
 
     -- Speed row
-    local plyRow9 = numRow( "Numbers", "Speed multiplier (def. 1)", "Float",
-                            tbl.speed or 1, 0, 100, function( val )
-        tbl.speed = val;
-    end )
+    numRow("Numbers", "Speed multiplier (def. 1)", "Float", tbl.speed or 1, 0, 100, function(val)
+        tbl.speed = val
+    end)
 
     -- Opacity row
-    local plyRow10 = numRow( "Numbers", "Opacity (-1 = no draw)", "Int",
-                            tbl.opacity or 255, -1, 255, function( val )
-        tbl.opacity = val;
-    end )
+    numRow("Numbers", "Opacity (-1 = no draw)", "Int", tbl.opacity or 255, -1, 255, function(val)
+        tbl.opacity = val
+    end)
 
     -- Friction row
-    local plyRow11 = numRow( "Numbers", "Friction (-1 = don't change)", "Float",
-                            tbl.friction or 1, -1, 2, function( val )
-        tbl.friction = val;
-    end )
+    numRow("Numbers", "Friction (-1 = don't change)", "Float", tbl.friction or 1, -1, 2, function(val)
+        tbl.friction = val
+    end)
 
     -- Scale row
-    local plyRow12 = numRow( "Numbers", "Scale [experimental] (def. 1)", "Float",
-                            tbl.scale or 1, 0.01, 20, function( val )
-        tbl.scale = val;
-    end )
+    numRow("Numbers", "Scale [experimental] (def. 1)", "Float", tbl.scale or 1, 0.01, 20, function(val)
+        tbl.scale = val
+    end)
 
     -- Blood type row
     local bloodCombo = plyProp:CreateRow("Other", "Blood type")
-    bloodCombo:Setup("Combo", {text = WEAPONSETS.BloodEnums[tbl.blood] or "Don't change"})
+
+    bloodCombo:Setup("Combo", {
+        text = WEAPONSETS.BloodEnums[tbl.blood] or "Don't change"
+    })
+
     for k, v in pairs(WEAPONSETS.BloodEnums) do
         bloodCombo:AddChoice(v, k)
     end
+
     bloodCombo:AddChoice("Don't change", -10)
-    bloodCombo.DataChanged = function(self, data)
+
+    bloodCombo.DataChanged = function(_, data)
         tbl.blood = data
     end
 
     ----------------[[ SAVE BUTTON ]]----------------
+    local bt4 = vgui.Create("DButton", f)
+    bt4:SetText("Save and exit")
+    bt4:Dock(BOTTOM)
+    bt4:DockMargin(pad, pad, pad, pad)
+    bt4:SetSize(150, 32)
 
-    local bt4 = vgui.Create( "DButton", f )
-    bt4:SetText( "Save and exit" )
-    bt4:Dock( BOTTOM )
-    bt4:DockMargin( pad, pad, pad, pad )
-    bt4:SetSize( 150, 32 )
     bt4.DoClick = function()
         tbl.set = {}
+
         for k, v in pairs(wepList) do
             if v.inSet then
                 tbl.set[k] = -1
             end
         end
+
         for k, v in pairs(ammoList) do
             if v > 0 then
                 tbl.set[k] = v
@@ -378,10 +407,14 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
         end
 
         net.Start("wepsetsToSv")
-            net.WriteString("saveSet")
-            net.WriteTable({ name = name, tbl = tbl })
-        net.SendToServer()
+        net.WriteString("saveSet")
 
+        net.WriteTable({
+            name = name,
+            tbl = tbl
+        })
+
+        net.SendToServer()
         f:Close()
     end
 
