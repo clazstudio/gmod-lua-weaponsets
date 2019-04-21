@@ -5,7 +5,7 @@ local FILL_MODE_NOT_ADDED = 3
 local WEP_PANEL_COLOR_IN = Color(200, 230, 201)
 local WEP_PANEL_COLOR_OUT = Color(255, 205, 210)
 
-// TODO
+-- TODO
 local function getCategorizedWeaponList(tbl)
     local wepList = list.Get("Weapon")
     local catList = {}
@@ -117,7 +117,6 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
             p.col = p.inSet and WEP_PANEL_COLOR_IN or WEP_PANEL_COLOR_OUT
         end
 
-        print(tbl.name)
         function p:Paint(w, h)
             draw.RoundedBox(pad * 2, 0, 0, w, h, p.col)
             draw.SimpleText(tbl.name, "DermaLarge", 64 + pad * 4, pad * 2, Color(50, 50, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)

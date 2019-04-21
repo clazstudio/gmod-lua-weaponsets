@@ -7,7 +7,7 @@ include("weaponsets/player.lua")
 include("weaponsets/commands.lua")
 
 WEAPONSETS.PasteBinSets = "Q72iy08U"
-WEAPONSETS.Version = "30.12.2017"
+WEAPONSETS.Version = 201904220 -- YYYYMMDDX
 
 WEAPONSETS.Convars = {
     ["loadoutSet"] = CreateConVar("weaponsets_loadoutset", "<default>", { FCVAR_REPLICATED, FCVAR_ARCHIVE }, 
@@ -306,14 +306,14 @@ function WEAPONSETS:Upgrade()
                         self.Convars["adminOnly"]:SetBool(tobool(options.onlyAdmin)) end
                 end
                 file.Delete("weaponsets_options.txt")
-                print("[WeaponSets] Options -> Convars")
+                print("[WeaponSets] Migration: Options -> Convars")
             end
             -- Validate all weapon sets
             local sets = self:GetList()
             for _, name in pairs(sets) do
                 local tbl = self:LoadFromFile(name)
                 self:SaveToFile(self:ValidateWeaponSet(name, tbl))
-                print("[WeaponSets] Validated: " .. name)
+                print("[WeaponSets] Migration: " .. name)
             end
         end 
     end

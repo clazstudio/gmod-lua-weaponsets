@@ -36,6 +36,7 @@ concommand.Add("weaponsets_delete", function(ply, _, args, _)
     end
 end, _, "Usage: weaponsets_delete <weaponSetName1> <weaponSetName2> ...", FCVAR_CLIENTCMD_CAN_EXECUTE)
 
+-- TODO: may be add NPC support?
 -- "give" concommand
 concommand.Add("weaponsets_give", function(ply, _, args, _)
     if !IsValid(ply) then return false end
