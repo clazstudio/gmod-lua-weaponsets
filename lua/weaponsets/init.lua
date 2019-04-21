@@ -175,6 +175,19 @@ function WEAPONSETS:RestoreDefaults(ply)
 end
 
 
+local function applySpeed(ply, speed) 
+    if speed == 1 or speed < 0 then return end
+    
+    ply:SetWalkSpeed(math.max(ply:GetWalkSpeed() * speed, 0.001))
+    ply:SetRunSpeed(math.max(ply:GetRunSpeed() * speed, 0.001))
+    ply:SetMaxSpeed(math.max(ply:GetMaxSpeed() * speed, 0.001))
+    ply:SetCanWalk(ply:GetWalkSpeed() >= 100); -- +walk
+    
+    -- issues with values greater than 1
+    ply:SetDuckSpeed(math.Clamp(ply:GetDuckSpeed() / speed, 0, 1))
+    ply:SetUnDuckSpeed(math.Clamp(ply:GetUnDuckSpeed() / speed, 0, 1))
+end
+
 --[[---------------------------------------------------------
     Weapon set giving
 ---------------------------------------------------------]]--
@@ -203,15 +216,7 @@ function WEAPONSETS:Give(ply, name)
     if tbl.friction > -1.0 then
         ply:SetFriction(tbl.friction) end
     
-    if tbl.speed ~= 1 then
-        ply:SetCrouchedWalkSpeed(math.Round(ply:GetCrouchedWalkSpeed() * tbl.speed))
-        ply:SetWalkSpeed(math.Round(ply:GetWalkSpeed() * tbl.speed))
-        ply:SetRunSpeed(math.Round(ply:GetRunSpeed() * tbl.speed))
-        ply:SetMaxSpeed(math.Round(ply:GetMaxSpeed() * tbl.speed))
-
-        ply:SetDuckSpeed(ply:GetDuckSpeed() / tbl.speed)
-        ply:SetUnDuckSpeed(ply:GetUnDuckSpeed() / tbl.speed)
-    end
+    applySpeed(ply, tbl.speed);
 
     if tbl.opacity < 255 and tbl.opacity >= 0 then
         ply:SetNoDraw(false)
