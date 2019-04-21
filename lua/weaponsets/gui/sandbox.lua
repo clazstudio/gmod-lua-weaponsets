@@ -191,9 +191,12 @@ list.Set("DesktopWindows", "CLazWeaponSets", {
         end):SetIcon("icon16/application_side_list.png")
         popupMenu:AddSpacer()
         for _, name in pairs(WEAPONSETS.WeaponSetsList) do
-            local subMenu, _ = popupMenu:AddSubMenu(name, function() 
+            local subMenu, subMenuOption = popupMenu:AddSubMenu(name, function() 
                 RunConsoleCommand("weaponsets_give", name, LocalPlayer():UserID())
             end)
+            subMenuOption.DoRightClick = function(_, keyCode)
+                RunConsoleCommand("weaponsets", name)
+            end
             subMenu:AddOption("Edit...", function() RunConsoleCommand("weaponsets", name) end):SetIcon("icon16/page_edit.png")
             subMenu:AddOption("Delete", function() 
                 deleteWeaponSetDialog(name, function() RunConsoleCommand("weaponsets_delete", name) end)
