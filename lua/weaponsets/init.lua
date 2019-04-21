@@ -273,11 +273,11 @@ end
     Downloading sets from Pastebin
 ---------------------------------------------------------]]--
 function WEAPONSETS:Download()
-    http.Fetch("http://pastebin.com/raw.php?i=" .. self.PasteBinSets, function(body, _, _, _)
+    http.Fetch("http://pastebin.com/raw/" .. self.PasteBinSets, function(body, _, _, _)
         local tbl = util.JSONToTable(body)
         if tbl == nil then return false end
         for name, id in pairs(tbl) do
-            http.Fetch( "http://pastebin.com/raw.php?i=" .. id, function(json, _, _, _)
+            http.Fetch( "http://pastebin.com/raw/" .. id, function(json, _, _, _)
                 local set = util.JSONToTable(json)
                 if set == nil then return false end
                 self:SaveToFile(name, set)
@@ -293,7 +293,7 @@ end
 ---------------------------------------------------------]]--
 function WEAPONSETS:Upgrade()
     if file.Exists("weaponsets_version.txt", "DATA") then
-        if file.Read("weaponsets_version.txt", "DATA") == self.Version then
+        if file.Read("weaponsets_version.txt", "DATA") == tostring(self.Version) then
             return
         else
             -- Options -> Convars
@@ -319,7 +319,7 @@ function WEAPONSETS:Upgrade()
     end
 
     timer.Simple(5, function() WEAPONSETS:Download() end)
-    file.Write("weaponsets_version.txt", self.Version)
+    file.Write("weaponsets_version.txt", tostring(self.Version))
 end
 
 
