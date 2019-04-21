@@ -216,7 +216,7 @@ function WEAPONSETS:Give(ply, name)
     if tbl.friction > -1.0 then
         ply:SetFriction(tbl.friction) end
     
-    applySpeed(ply, tbl.speed);
+    applySpeed(ply, tbl.speed)
 
     if tbl.opacity < 255 and tbl.opacity >= 0 then
         ply:SetNoDraw(false)

@@ -1,7 +1,33 @@
+local FILL_MODE_ALL = 1
+local FILL_MODE_ADDED = 2
+local FILL_MODE_NOT_ADDED = 3
+
+local WEP_PANEL_COLOR_IN = Color(200, 230, 201)
+local WEP_PANEL_COLOR_OUT = Color(255, 205, 210)
+
+// TODO
+local function getCategorizedWeaponList(tbl)
+    local wepList = list.Get("Weapon")
+    local catList = {}
+
+    for class, wep in pairs(list.Get("Weapon")) do
+        if !wep.Spawnable then continue end
+
+        local cat = wep.Category or 'Uncategorized'
+        catList[cat] = catList[cat] or {}
+        table.insert(catList[cat], { 
+            ["name"] = wep.PrintName or class,
+            ["inSet"] = tbl.set[class] ~= nil
+        })
+    end
+
+    wepList = nil
+    return catList
+end
+
 --[[---------------------------------------------------------
     GUI - Weapon sets edit window
 ---------------------------------------------------------]]--
-
 function WEAPONSETS:OpenEditMenu(name, tbl)
     name, tbl = self:ValidateWeaponSet(name, tbl)
     local pad = 2 -- = padding/2 = margin/2
@@ -9,7 +35,7 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
     local wepList = {}
     local ammoList = {}
     
-    for i = 1, 50 do
+    for i = 1, 128 do
         local name = game.GetAmmoName(i)
         if !name then break end
         ammoList[name] = 0
@@ -24,7 +50,7 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
     end
 
     for k, v in pairs(tbl.set) do
-    	if tonumber(v) > 0 then
+    	if tonumber(v) >= 0 then
             ammoList[k] = tonumber(v)
         elseif !wepList[k] then
             wepList[k] = { name = k, inSet = true }
@@ -45,6 +71,19 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
     f:Center()
     f:MakePopup()
 
+    -- Minimize and maximize buttons
+    f.btnMinim:SetEnabled(true)
+    f.btnMinim.DoClick = function() 
+        f:SetKeyboardInputEnabled(false)
+        f.btnMinim:SetEnabled(false)
+        f.btnMaxim:SetEnabled(true)
+    end
+    f.btnMaxim.DoClick = function() 
+        f:SetKeyboardInputEnabled(true)
+        f.btnMinim:SetEnabled(true)
+        f.btnMaxim:SetEnabled(false)
+    end
+
     -- DPropertySheet
     local sheet = vgui.Create("DPropertySheet", f)
     sheet:DockMargin(pad, pad, pad, pad)
@@ -52,7 +91,7 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
     sheet:Dock(FILL)
 
 
-    ----------------[[ WEAPONs LIST PANEL ]]----------------
+    ----------------[[ WEAPONS LIST PANEL ]]----------------
     local wepListPan = vgui.Create("DPanel", sheet)
     wepListPan:SetDrawBackground(false)
     sheet:AddSheet("Weapons", wepListPan, "icon16/text_list_bullets.png")
@@ -63,42 +102,51 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
     wepScroll:Dock(FILL)
 
     -- Panel with weapon information
-
     local function buildWeaponPanel(class, tbl)
         local p = vgui.Create("DButton")
         p.inSet = tbl.inSet
-        p.col = p.inSet and Color(200, 230, 201) or Color(255, 205, 210)
-        p:SetText(tbl.name .. " (" .. class .. ")")
+        p.col = p.inSet and WEP_PANEL_COLOR_IN or WEP_PANEL_COLOR_OUT
         p:DockMargin(0, pad, 0, pad)
-        p:SetHeight(32)
+        p:SetHeight(64)
+        p:SetText("");
         p:Dock(TOP)
 
         p.DoClick = function()
             p.inSet = !p.inSet
             wepList[class].inSet = p.inSet
-            p.col = p.inSet and Color(200, 230, 201) or Color(255, 205, 210)
+            p.col = p.inSet and WEP_PANEL_COLOR_IN or WEP_PANEL_COLOR_OUT
         end
 
+        print(tbl.name)
         function p:Paint(w, h)
             draw.RoundedBox(pad * 2, 0, 0, w, h, p.col)
+            draw.SimpleText(tbl.name, "DermaLarge", 64 + pad * 4, pad * 2, Color(50, 50, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+            draw.SimpleText(class, "Trebuchet18", 64 + pad * 4, 32 + pad * 3, Color(50, 50, 50), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
         end
+
+        local img = vgui.Create("DImage", p)
+        img:SetPos(0, 0)
+        img:SetSize(64, 64)
+        img:SetImage( "entities/" .. class .. ".png", "vgui/avatar_default" )
 
         return p
     end
 
     -- Scroll panel filling algorithm
-    local FILL_MODE_ALL = 1
-    local FILL_MODE_ADDED = 2
-    local FILL_MODE_NOT_ADDED = 3
-    local function fillWepScroll(fillMode)
+    local function fillWepScroll(fillMode, filter)
         wepScroll:Clear()
 
-        for k, v in pairs(wepList) do
+        for k, v in SortedPairsByMemberValue(wepList, "name") do
             if v.inSet and fillMode == FILL_MODE_NOT_ADDED then continue end
             if !v.inSet and fillMode == FILL_MODE_ADDED then continue end
+            if filter and string.find(string.lower(v.name .. " " .. k), filter) == nil then continue end
+
             wepScroll:AddItem(buildWeaponPanel(k, v))
         end
     end
+
+    local lastFillMode = FILL_MODE_ALL
+    local lastFilter = ""
 
     -- top weapon panel
     local wepTopPan = vgui.Create("DPanel", wepListPan)
@@ -115,7 +163,18 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
     wepShowCombo:AddChoice("Show only added", FILL_MODE_ADDED)
     wepShowCombo:AddChoice("Show not added", FILL_MODE_NOT_ADDED)
     wepShowCombo.OnSelect = function(_, _, _, fillMode)
-        fillWepScroll(fillMode)
+        lastFillMode = fillMode
+        fillWepScroll(lastFillMode, lastFilter)
+    end
+
+    -- Search input
+    local wepSearchEdit = vgui.Create("DTextEntry", wepTopPan)
+    wepSearchEdit:Dock(FILL)
+    wepSearchEdit:SetPlaceholderText("Search by name or class")
+    wepSearchEdit:DockMargin(pad * 2, 0 , pad * 2, 0)
+    wepSearchEdit.OnEnter = function(self)
+        lastFilter = string.lower(self:GetValue())
+        fillWepScroll(lastFillMode, lastFilter)
     end
 
     -- Add custom weapon button
