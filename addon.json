@@ -1,0 +1,6 @@
+{
+  "title": "WeaponSets",
+  "type": "tool",
+  "tags": ["fun"],
+  "ignore": ["glualint.json", ".editorconfig", "README.md", "Makefile", ".git*", "*.gma"]
+}
