@@ -2,8 +2,8 @@
     CLIENT - cl_init.lua
 -----------------------------------------------------------]]
 include("weaponsets/shared.lua")
-include("weaponsets/gui/giveMenu.lua")
-include("weaponsets/gui/editMenu.lua")
+include("weaponsets/gui/give_menu.lua")
+include("weaponsets/gui/edit_menu.lua")
 include("weaponsets/gui/sandbox.lua")
 WEAPONSETS.WeaponSetsList = {}
 WEAPONSETS.SettingsPanel = nil
