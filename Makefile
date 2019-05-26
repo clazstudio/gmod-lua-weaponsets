@@ -11,5 +11,4 @@ pack:
 	${GMOD_BIN}/gmad_linux create -folder . -out ./${ADDON_NAME}.gma
 
 publish: pack
-	LD_LIBRARY_PATH=${GMOD_BIN} ${GMOD_BIN}/gmpublish_linux update -id ${WORKSHOP_ID} -addon ${ADDON_NAME}.gma
-
+	LD_LIBRARY_PATH=${GMOD_BIN} ${GMOD_BIN}/gmpublish_linux update -id ${WORKSHOP_ID} -addon ${ADDON_NAME}.gma -changes "${changes}"
