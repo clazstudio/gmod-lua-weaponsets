@@ -4,6 +4,7 @@
 include("weaponsets/shared.lua")
 include("weaponsets/player.lua")
 include("weaponsets/commands.lua")
+
 WEAPONSETS.PasteBinSets = "Q72iy08U"
 WEAPONSETS.Version = 201904220 -- YYYYMMDDX
 
