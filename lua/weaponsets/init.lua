@@ -45,27 +45,55 @@ function WEAPONSETS:FileExists(name)
     return file.Exists(path, "DATA"), path
 end
 
--- Load wepset from file
+-- Cache variables
+local lastSetsList = nil
 local lastLoadedName = nil
 local lastLoadedTable = nil
 
+-- gets list of weaponsets
+function WEAPONSETS:GetList()
+    if lastSetsList ~= nil then
+        return lastSetsList
+    end
+
+    self:FileExists()
+    local tbl, _ = file.Find("weaponsets/*.txt", "DATA")
+
+    for k, v in pairs(tbl) do
+        tbl[k] = string.Left(v, #v - 4)
+    end
+
+    lastSetsList = tbl;
+    return tbl
+end
+
+-- Load wepset from file
 function WEAPONSETS:LoadFromFile(name)
     if lastLoadedName == name then return lastLoadedTable end
     name = self:FormatFileName(name)
     local exists, path = self:FileExists(name)
+    if not exists then return nil end
 
-    if exists then
-        local tbl = util.JSONToTable(file.Read(path, "DATA"))
+    local tbl = util.JSONToTable(file.Read(path, "DATA"))
+    if tbl == nil then return nil end
 
-        if tbl ~= nil then
-            lastLoadedName = name
-            lastLoadedTable = tbl
+    -- util.JSONToTable converts keys to numbers
+    local updatedSet = {}
+    for k, v in pairs(tbl.set) do
+        local count = tonumber(v)
+        local key = string.StartWith(k, "_ammo_") and string.sub(k, 7) or k
+
+        if (count ~= nil) then
+            updatedSet[key] = math.floor(count)
         end
-
-        return tbl
     end
+    tbl.set = updatedSet
 
-    return nil
+    -- cache
+    lastLoadedName = name
+    lastLoadedTable = tbl
+
+    return tbl
 end
 
 -- Save wepset to file
@@ -73,11 +101,28 @@ function WEAPONSETS:SaveToFile(name, tbl)
     name = self:FormatFileName(name)
     local exists, path = self:FileExists(name)
 
+    -- cache
+    if not exists then
+        lastSetsList = nil
+    end
     if lastLoadedName == name then
         lastLoadedTable = tbl
     end
 
-    file.Write(path, util.TableToJSON(tbl))
+    -- util.JSONToTable converts keys to numbers
+    local tblCopy = table.Copy(tbl)
+    local updatedSet = {}
+    for k, v in pairs(tbl.set) do
+        local count = tonumber(v)
+        if count and count >= 0 then
+            updatedSet["_ammo_" .. k] = count
+        else
+            updatedSet[k] = -1
+        end
+    end
+    tblCopy.set = updatedSet;
+    file.Write(path, util.TableToJSON(tblCopy))
+    tblCopy = {}
 
     return exists
 end
@@ -87,21 +132,10 @@ function WEAPONSETS:DeleteFile(name)
     name = self:FormatFileName(name)
     local exists, path = self:FileExists(name)
     if not exists then return false end
+
     file.Delete(path)
-
+    lastSetsList = nil
     return true
-end
-
--- gets list of weaponsets
-function WEAPONSETS:GetList()
-    self:FileExists()
-    local tbl, _ = file.Find("weaponsets/*.txt", "DATA")
-
-    for k, v in pairs(tbl) do
-        tbl[k] = string.Left(v, #v - 4)
-    end
-
-    return tbl
 end
 
 --[[---------------------------------------------------------
@@ -348,14 +382,18 @@ end
 -----------------------------------------------------------]]
 -- Save weapon set to file
 WEAPONSETS.NetFuncs.saveSet = function(ply, data)
-    if WEAPONSETS:Access(ply) and not WEAPONSETS:SaveToFile(WEAPONSETS:ValidateWeaponSet(data.name, data.tbl)) then
-        WEAPONSETS:SendList()
+    if WEAPONSETS:Access(ply) then
+        local exists = WEAPONSETS:SaveToFile(WEAPONSETS:ValidateWeaponSet(data.name, data.tbl))
+        if not exists then
+            -- new set has been added
+            WEAPONSETS:SendList()
+        end
     end
 end
 
 -- Retrieve weapon sets list
 WEAPONSETS.NetFuncs.retrieveList = function(ply, data)
-    if WEAPONSETS:Access(ply) then
+    if WEAPONSETS.Convars["deathmatch"]:GetBool() or WEAPONSETS:Access(ply) then
         WEAPONSETS:SendList(ply)
     end
 end

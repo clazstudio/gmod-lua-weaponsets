@@ -4,27 +4,6 @@ local FILL_MODE_NOT_ADDED = 3
 local WEP_PANEL_COLOR_IN = Color(200, 230, 201)
 local WEP_PANEL_COLOR_OUT = Color(255, 205, 210)
 
--- TODO
---[[local function getCategorizedWeaponList(tbl)
-    local wepList = list.Get("Weapon")
-    local catList = {}
-
-    for class, wep in pairs(list.Get("Weapon")) do
-        if not wep.Spawnable then continue end
-        local cat = wep.Category or 'Uncategorized'
-        catList[cat] = catList[cat] or {}
-
-        table.insert(catList[cat], {
-            ["name"] = wep.PrintName or class,
-            ["inSet"] = tbl.set[class] ~= nil
-        })
-    end
-
-    wepList = nil
-
-    return catList
-end]]
-
 --[[---------------------------------------------------------
     GUI - Weapon sets edit window
 -----------------------------------------------------------]]
@@ -35,9 +14,9 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
     local ammoList = {}
 
     for i = 1, 128 do
-        local ammoMame = game.GetAmmoName(i)
-        if not ammoMame then break end
-        ammoList[ammoMame] = 0
+        local ammoName = game.GetAmmoName(i)
+        if not ammoName then break end
+        ammoList[ammoName] = 0
     end
 
     for k, v in pairs(list.Get("Weapon")) do
