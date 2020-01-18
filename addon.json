@@ -2,5 +2,5 @@
   "title": "WeaponSets",
   "type": "tool",
   "tags": ["fun"],
-  "ignore": ["glualint.json", ".editorconfig", "README.md", "Makefile", ".git*", "*.gma"]
+  "ignore": ["glualint.json", ".editorconfig", "*.md", "_config.yml", "*.bat", "Makefile", ".git*", "*.gma"]
 }
