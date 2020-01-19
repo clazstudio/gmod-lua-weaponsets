@@ -9,6 +9,9 @@ WEAPONSETS.WeaponSetsList = {}
 WEAPONSETS.SettingsPanel = nil
 WEAPONSETS.ModifyPanel = nil
 
+-- to make this variable available to clients
+CreateConVar("weaponsets_loadoutset", "<default>", {FCVAR_REPLICATED}, "Loadout weapon set for all players")
+
 --[[---------------------------------------------------------
     Net functions
 -----------------------------------------------------------]]
@@ -53,7 +56,7 @@ WEAPONSETS.NetFuncs.receiveList = function(data)
         end
 
         WEAPONSETS.SettingsPanel.combo1:AddChoice("<default>")
-        WEAPONSETS.SettingsPanel.combo1:SetText(GetConVar("weaponsets_loadoutset"):GetString())
+        WEAPONSETS.SettingsPanel.combo1:SetValue(GetConVar("weaponsets_loadoutset"):GetString())
     end
 
     if WEAPONSETS.ModifyPanel then

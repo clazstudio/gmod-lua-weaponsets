@@ -6,7 +6,7 @@ include("weaponsets/player.lua")
 include("weaponsets/commands.lua")
 
 WEAPONSETS.PasteBinSets = "Q72iy08U"
-WEAPONSETS.Version = 201904220 -- YYYYMMDDX
+WEAPONSETS.Version = 202001200 -- YYYYMMDDX
 
 WEAPONSETS.Convars = {
     ["loadoutSet"] = CreateConVar("weaponsets_loadoutset", "<default>", {FCVAR_REPLICATED, FCVAR_ARCHIVE}, "Loadout weapon set for all players"),
@@ -21,7 +21,7 @@ util.AddNetworkString("wepsetsToCl")
     Player access
 -----------------------------------------------------------]]
 function WEAPONSETS:Access(ply)
-    if not IsValid(ply) then return true end
+    if not IsValid(ply) then return true end -- server console
 
     if self.Convars["adminOnly"]:GetBool() then
         return ply:IsSuperAdmin()
@@ -40,7 +40,7 @@ function WEAPONSETS:FileExists(name)
     if not file.Exists("weaponsets", "DATA") then
         file.CreateDir("weaponsets")
 
-        return false
+        return false, path
     end
 
     return file.Exists(path, "DATA"), path

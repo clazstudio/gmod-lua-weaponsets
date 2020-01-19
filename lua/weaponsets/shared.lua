@@ -33,7 +33,17 @@ local emptySet = {
     blood = -10,
     friction = -1.0,
     scale = 1,
-    set = {}
+    set = {
+        -- weapon_class = -1 or ammo_name = count
+    }
+}
+
+-- TODO:
+local _sets = {
+    file_name = {
+        name = "Pretty name",
+        usergroup = "user",
+    }
 }
 
 function WEAPONSETS:GetEmptySet()

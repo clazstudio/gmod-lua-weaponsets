@@ -1,3 +1,4 @@
 {
-  "prettyprint_indentation": "    "
+  "prettyprint_indentation": "    ",
+  "lint_trailingWhitespace": true
 }

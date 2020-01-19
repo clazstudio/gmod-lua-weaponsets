@@ -5,6 +5,7 @@
 local function retrieveList()
     net.Start("wepsetsToSv")
     net.WriteString("retrieveList")
+    net.WriteTable({})
     net.SendToServer()
 end
 
@@ -49,6 +50,7 @@ local function buildSettingsPanel(pan)
 
         combo1:AddChoice("<default>")
     end
+    combo1:SetValue(GetConVar("weaponsets_loadoutset"):GetString())
 
     pan:Help([[This set will be given for all players with "<inherit>" weapon set or without it on loadout]])
     pan:CheckBox("Only superadmins", "weaponsets_adminonly")

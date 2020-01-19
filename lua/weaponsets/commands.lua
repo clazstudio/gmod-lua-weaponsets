@@ -1,12 +1,13 @@
+local flags = FCVAR_CLIENTCMD_CAN_EXECUTE
+
 --[[---------------------------------------------------------
     SERVER - commands.lua
 -----------------------------------------------------------]]
 -- "weaponsets" concommand
 concommand.Add("weaponsets", function(ply, _, args, _)
-    if not IsValid(ply) then return false end
     if not WEAPONSETS:Access(ply) then return false end
 
-    if #args == 1 then
+    if #args == 1 and IsValid(ply) then
         local name = tostring(args[1])
         local tbl = WEAPONSETS:LoadFromFile(name)
         net.Start("wepsetsToCl")
@@ -22,11 +23,10 @@ concommand.Add("weaponsets", function(ply, _, args, _)
         local str = table.concat(WEAPONSETS:GetList(), ", ")
         print("Weapon sets: " .. str)
     end
-end, _, "Usage: weaponsets <weaponSetName>", FCVAR_CLIENTCMD_CAN_EXECUTE)
+end, _, "Usage: weaponsets <weaponSetName>", flags)
 
 -- "delete" concommand
 concommand.Add("weaponsets_delete", function(ply, _, args, _)
-    if not IsValid(ply) then return false end
     if not WEAPONSETS:Access(ply) then return false end
 
     if #args > 0 then
@@ -38,12 +38,11 @@ concommand.Add("weaponsets_delete", function(ply, _, args, _)
         local str = table.concat(WEAPONSETS:GetList(), ", ")
         print("Weapon sets: " .. str)
     end
-end, _, "Usage: weaponsets_delete <weaponSetName1> <weaponSetName2> ...", FCVAR_CLIENTCMD_CAN_EXECUTE)
+end, _, "Usage: weaponsets_delete <weaponSetName1> <weaponSetName2> ...", flags)
 
 -- TODO: may be add NPC support?
 -- "give" concommand
 concommand.Add("weaponsets_give", function(ply, _, args, _)
-    if not IsValid(ply) then return false end
     if not WEAPONSETS:Access(ply) then return false end
 
     if #args < 1 then
@@ -71,11 +70,10 @@ concommand.Add("weaponsets_give", function(ply, _, args, _)
             end
         end
     end
-end, _, "Usage: weaponsets_give <weaponSetName> [userId1] [userId2] ...", FCVAR_CLIENTCMD_CAN_EXECUTE)
+end, _, "Usage: weaponsets_give <weaponSetName> [userId1] [userId2] ...", flags)
 
 -- "setloadout" concommand
 concommand.Add("weaponsets_setloadout", function(ply, _, args, _)
-    if not IsValid(ply) then return false end
     if not WEAPONSETS:Access(ply) then return false end
 
     if #args < 1 then
@@ -107,4 +105,4 @@ concommand.Add("weaponsets_setloadout", function(ply, _, args, _)
             end
         end
     end
-end, _, "Usage: weaponsets_setloadout <weaponSetName> [userId1] [userId2] ...", FCVAR_CLIENTCMD_CAN_EXECUTE)
+end, _, "Usage: weaponsets_setloadout <weaponSetName> [userId1] [userId2] ...", flags)
