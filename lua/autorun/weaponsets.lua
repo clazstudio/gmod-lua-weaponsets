@@ -1,13 +1,39 @@
-WEAPONSETS = WEAPONSETS or {}
-WEAPONSETS.NetFuncs = WEAPONSETS.NetFuncs or {}
+WeaponSets = WeaponSets or {}
+WeaponSets.Version = 202001221 -- YYYYMMDDX
+WeaponSets.Debug = true
 
 if SERVER then
-    AddCSLuaFile("weaponsets/gui/give_menu.lua")
-    AddCSLuaFile("weaponsets/gui/edit_menu.lua")
-    AddCSLuaFile("weaponsets/gui/sandbox.lua")
-    AddCSLuaFile("weaponsets/cl_init.lua")
-    AddCSLuaFile("weaponsets/shared.lua")
-    include("weaponsets/init.lua")
+    AddCSLuaFile("weaponsets/sh_core.lua")
+    AddCSLuaFile("weaponsets/sh_playerscale.lua")
+    AddCSLuaFile("weaponsets/sh_net.lua")
+    AddCSLuaFile("weaponsets/sh_files.lua")
+
+    AddCSLuaFile("weaponsets/cl_lang.lua")
+    AddCSLuaFile("weaponsets/cl_files.lua")
+
+    local lang_files = file.Find("weaponsets/lang/*.lua", "LUA")
+    for _, lang_file in ipairs(lang_files) do
+        AddCSLuaFile("weaponsets/lang/" .. lang_file)
+    end
+
+    include("weaponsets/sh_core.lua")
+    include("weaponsets/sh_playerscale.lua")
+    include("weaponsets/sh_net.lua")
+    include("weaponsets/sh_files.lua")
+
+    include("weaponsets/sv_core.lua")
+    include("weaponsets/sv_files.lua")
+    include("weaponsets/sv_commands.lua")
 else
-    include("weaponsets/cl_init.lua")
+    include("weaponsets/sh_core.lua")
+    include("weaponsets/sh_playerscale.lua")
+    include("weaponsets/sh_net.lua")
+    include("weaponsets/sh_files.lua")
+
+    include("weaponsets/cl_lang.lua")
+    include("weaponsets/cl_files.lua")
 end
+
+WeaponSets.D("Init complete", #WeaponSets._optionsOrder .. " options")
+
+-- By CLazStudio
