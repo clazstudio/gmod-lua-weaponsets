@@ -2,6 +2,12 @@
 ======
 // - use Kit word instead of Set and rename addon to LoadoutKits?
 - Weapons and ammoes scan functions
+- Deathmatch
+- New GUI
+- net messages?
+- sandbox desktop 64x64 icon
+- youtube demo video
+- add to lang - sandbox, clientside convar and concommand help, gui 
 
  Files
 -------
@@ -86,8 +92,12 @@
 - `sv WeaponSets:PlayerClass(set : table, displayName : string) -> PLAYER`
 
 ### Files
-Значения опций набора лежат в таблице и эта таблица сохраняется в отдельный файл.
-Ещё есть файл со списком зарегистрированных наборов, в нём хранится соответствие имени файла с набором (id) к структуре WeaponSet.
+Набор оружий, представленный таблицей значений (`values`) - таблица, где каждому ключу сопоставлено 
+значение какой-то опции (`SetOption`).
+Набор оружий, представленный строкой (`id`) - это, id который используется в качестве имени файла,
+в котором хранится таблица значений.
+Есть таблица зарегистрированных наборов, в ней хранятся соответствия `id` к структуре `WeaponSet`
+
 - `sv WeaponSets:GiveSet(ply : Player, id : string) : bool, [err : string]`
 - `sv WeaponSets:SetLoadout(ply : Player, id : string) : bool`
 - `sv WeaponSets:SetLoadout(SteamId : string, setId : string) : bool`

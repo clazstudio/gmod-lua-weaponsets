@@ -8,7 +8,8 @@ WeaponSets.Net = {
     -- Server -> Client
     SendSets = 0,
     SendSet = 1,
-    Response = 2
+    SendPlayers = 2,
+    Response = 3
 }
 
 local typeBits = 2
@@ -26,15 +27,16 @@ end
 -- FIXME: как-нибудь покрасивее хочу, а не так
 
 local COMPRESS_LENGTH = 512
-local DATA_LEN_BITS = 15
+local DATA_LENGTH_BITS = 15
+
 function WeaponSets:NetWriteTable(tbl)
-    local json = (tbl ~= nil) and util.TableToJSON(tbl) or ""
+    local json = (istable(tbl)) and util.TableToJSON(tbl) or ""
     local compress = (#json > COMPRESS_LENGTH)
-    net.WriteBit(compress and 1 or 0)
+    net.WriteBit(compress)
     if compress then
         json = util.Compress(json)
         local len = #json
-        net.WriteUInt(len, DATA_LEN_BITS)
+        net.WriteUInt(len, DATA_LENGTH_BITS)
         net.WriteData(json, len)
     else
         net.WriteString(json)
@@ -45,7 +47,7 @@ function WeaponSets:NetReadTable()
     local compress = net.ReadBit(compress)
     local json = nil
     if compress == 1 then
-        local len = net.ReadUInt(DATA_LEN_BITS)
+        local len = net.ReadUInt(DATA_LENGTH_BITS)
         json = net.ReadData(len)
         json = util.Decompress(json)
     else

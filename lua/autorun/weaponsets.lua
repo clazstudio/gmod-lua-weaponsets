@@ -10,6 +10,7 @@ if SERVER then
 
     AddCSLuaFile("weaponsets/cl_lang.lua")
     AddCSLuaFile("weaponsets/cl_files.lua")
+    AddCSLuaFile("weaponsets/gui/sandbox.lua")
 
     local lang_files = file.Find("weaponsets/lang/*.lua", "LUA")
     for _, lang_file in ipairs(lang_files) do
@@ -32,6 +33,7 @@ else
 
     include("weaponsets/cl_lang.lua")
     include("weaponsets/cl_files.lua")
+    include("weaponsets/gui/sandbox.lua")
 end
 
 WeaponSets.D("Init complete", #WeaponSets._optionsOrder .. " options")

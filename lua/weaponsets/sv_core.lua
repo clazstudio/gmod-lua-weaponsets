@@ -1,27 +1,35 @@
-function WeaponSets:Give(ply, set, midGame)
+--- Gives weaponset to the player
+-- @param ply Given player
+-- @param values table, weaponset to give
+-- @param midGame boolean
+function WeaponSets:Give(ply, values, midGame)
     for _, key in ipairs(self._optionsOrder) do
-        local value = set[key]
+        local value = values[key]
         if value == nil then continue end
 
         local option = self.Options[key]
         if isfunction(option.equip) then
-            option.equip(ply, value, midGame, set, option)
+            option.equip(ply, value, midGame, values, option)
         end
     end
 end
 
-function WeaponSets:Strip(ply, set)
+--- Strips weaponset from the player
+-- @param ply Given player
+-- @param values table, weaponset to strip
+function WeaponSets:Strip(ply, set, midGame)
     for _, key in ipairs(self._optionsOrder) do
         local value = set[key]
         if value == nil then continue end
 
         local option = self.Options[key]
         if isfunction(option.strip) then
-            option.strip(ply, value, set, option)
+            option.strip(ply, value, midGame, set, option)
         end
     end
 end
 
+--- Generates weaponset values from the given player object
 function WeaponSets:FromPlayer(ply)
     local set = {}
 
@@ -34,6 +42,7 @@ function WeaponSets:FromPlayer(ply)
     return set
 end
 
+--- Generates PLAYER struct from a weaponset
 function WeaponSets:PlayerClass(set, displayName)
     local PLAYER = {
         DisplayName = displayName,
@@ -60,88 +69,30 @@ function WeaponSets:PlayerClass(set, displayName)
     return PLAYER
 end
 
--- Version --
-function WeaponSets:Download()
-    http.Fetch("http://pastebin.com/raw/" .. self.PasteBinSets, function(body, _, _, _)
-        local tbl = util.JSONToTable(body)
-        if tbl == nil then return false end
+-- Infinite ammo --
 
-        for name, id in pairs(tbl) do
-            http.Fetch("http://pastebin.com/raw/" .. id, function(json, _, _, _)
-                local set = util.JSONToTable(json)
-                if set == nil then return false end
-                self:SaveToFile(name, set)
-                print("[WeaponSets] Downloaded: " .. name)
-            end)
-        end
-    end)
-end
-
-function WeaponSets:Upgrade()
-    if file.Exists("weaponsets_version.txt", "DATA") then
-        if file.Read("weaponsets_version.txt", "DATA") == tostring(self.Version) then
-            return
-        else
-            -- Options -> Convars
-            if file.Exists("weaponsets_options.txt", "DATA") then
-                local options = util.JSONToTable(file.Read("weaponsets_options.txt", "DATA"))
-
-                if options then
-                    if options.loadoutset then
-                        self.Convars["loadoutSet"]:SetString(options.loadoutset)
-                    end
-
-                    if options.onlyAdmin then
-                        self.Convars["adminOnly"]:SetBool(tobool(options.onlyAdmin))
-                    end
-                end
-
-                file.Delete("weaponsets_options.txt")
-                print("[WeaponSets] Migration: Options -> Convars")
-            end
-
-            -- Validate all weapon sets
-            local sets = self:GetList()
-
-            for _, name in pairs(sets) do
-                local tbl = self:LoadFromFile(name)
-                self:SaveToFile(self:ValidateWeaponSet(name, tbl))
-                print("[WeaponSets] Migration: " .. name)
-            end
-        end
+local function checkInfiniteAmmo(ply, wep)
+    if not ply.wsInfiniteAmmo or not IsValid(wep) then
+        return
     end
 
-    timer.Simple(5, function()
-        WEAPONSETS:Download()
-    end)
+    local primaryAmmo = wep:GetPrimaryAmmoType()
+    if primaryAmmo ~= -1 and ply.wsInfiniteAmmo ~= 2 then
+        ply:SetAmmo(99, primaryAmmo)
+    end
 
-    file.Write("weaponsets_version.txt", tostring(self.Version))
+    local secondaryAmmo = wep:GetSecondaryAmmoType()
+    if secondaryAmmo ~= -1 and isnumber(ply.wsInfiniteAmmo) and ply.wsInfiniteAmmo >= 2 then
+        ply:SetAmmo(99, secondaryAmmo)
+    end
 end
 
--- Hooks --
-
-hook.Add("PlayerLoadout", "WeaponSets", function(ply)
-    local result = ply:GiveWeaponSet()
-    if result then return false end
-end)
-
-hook.Add("Initialize", "WeaponSets", function()
-    WeaponSets.Sets = WeaponSets:ReadSets() or {}
-    WeaponSets:ClearCache()
-end)
-
-hook.Add("Shutdown", "WeaponSets", function()
-    if WeaponSets.Sets ~= nil then
-        WeaponSets:WriteSets(WeaponSets.Sets)
+timer.Create("wsInfiniteAmmo", 5, 0, function()
+    for _, ply in pairs(player.GetHumans()) do
+        checkInfiniteAmmo(ply, ply:GetActiveWeapon())
     end
 end)
 
-hook.Add("PlayerInitialSpawn", "WeaponSets", function(ply)
-    timer.Simple(5, function()
-        WeaponSets:SendSets(ply)
-    end)
-end)
-
-hook.Add("ShowTeam", "WeaponSets", function(ply)
-    -- TODO
+hook.Add("PlayerSwitchWeapon", "WeaponSets", function(ply, from, to)
+    checkInfiniteAmmo(ply, to)
 end)

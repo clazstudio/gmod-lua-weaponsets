@@ -3,16 +3,21 @@ WeaponSets.Sets = {}
 local adminOnly = CreateConVar("weaponsets_adminonly", "1", {FCVAR_REPLICATED, FCVAR_NOTIFY, FCVAR_ARCHIVE},
     "If enabled only superadmin can give and edit weaponsets")
 
-function WeaponSets:Access(ply, perm)
+function WeaponSets:Access(ply, perm, target)
     if not IsValid(ply) then return true end -- server console
 
-    if adminOnly:GetBool() then
-        self.D("Access (" .. tostring(ply) .. ", " .. perm .. ") = " .. ply:IsSuperAdmin())
-        return ply:IsSuperAdmin()
-    else
-        return true
-    end
+    local res = hook.Call("WeaponSets_Access", nil, ply, perm, target)
+    return res ~= false
 end
+
+hook.Add("WeaponSets_Access", "weaponsets_adminonly", function(ply, perm)
+    if adminOnly:GetBool() then
+        return ply:IsSuperAdmin() or (
+            (perm == "select" or perm == "retrieve_sets") and
+            cvars.Bool("weaponsets_deathmatch")
+        )
+    end
+end)
 
 local fileCounters = {}
 function WeaponSets:IdFromName(name)

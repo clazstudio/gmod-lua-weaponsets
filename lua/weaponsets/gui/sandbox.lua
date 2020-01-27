@@ -3,9 +3,7 @@
 -----------------------------------------------------------]]
 -- Retrieve weapon sets list from server
 local function retrieveList()
-    net.Start("wepsetsToSv")
-    net.WriteString("retrieveList")
-    net.WriteTable({})
+    WeaponSets:StartNet(WeaponSets.Net.RetrieveSets)
     net.SendToServer()
 end
 
@@ -36,21 +34,22 @@ end
 
 -- settings toolmenu DForm
 local function buildSettingsPanel(pan)
-    if not WEAPONSETS then return end
+    if not WeaponSets then return end
     pan:SetName("WeaponSets settings")
     local combo1, _ = pan:ComboBox("Global loadout set", "weaponsets_loadoutset")
-    local sets = WEAPONSETS.WeaponSetsList or {}
+    local sets = WeaponSets.Sets or {}
 
-    if #sets == 0 then
+    if table.Count(sets) == 0 then
         retrieveList()
     else
-        for _, v in pairs(sets) do
-            combo1:AddChoice(v)
+        for id, set in pairs(sets) do
+            combo1:AddChoice(set.name or id, id)
         end
 
-        combo1:AddChoice("<default>")
+        combo1:AddChoice("#weaponsets.set.default", "<default>")
     end
-    combo1:SetValue(GetConVar("weaponsets_loadoutset"):GetString())
+    local curSet = GetConVar("weaponsets_loadoutset"):GetString()
+    combo1:SetValue((sets[curSet] == nil) and curSet or (sets[curSet].name or curSet))
 
     pan:Help([[This set will be given for all players with "<inherit>" weapon set or without it on loadout]])
     pan:CheckBox("Only superadmins", "weaponsets_adminonly")
@@ -59,23 +58,25 @@ local function buildSettingsPanel(pan)
     pan:Help([[If enabled all players will can choose loadout set]])
     pan:Button("Refresh weapon sets list", "").DoClick = retrieveList
     pan.combo1 = combo1
-    WEAPONSETS.SettingsPanel = pan
+    WeaponSets.SettingsPanel = pan
 end
 
 -- Toolmenu DForm for editing sets
+-- TODO: remove it, create window instead
 local function buildModifyPanel(pan)
-    if not WEAPONSETS then return end
+    if not WeaponSets then return end
     local ls = vgui.Create("DListView")
     ls:SetHeight(400)
     ls:SetMultiSelect(false)
     ls:AddColumn("Set name")
-    local sets = WEAPONSETS.WeaponSetsList or {}
+    ls:AddColumn("Set id")
+    local sets = WeaponSets.Sets or {}
 
-    if #sets == 0 then
+    if table.Count(sets) == 0 then
         retrieveList()
     else
-        for _, v in pairs(sets) do
-            ls:AddLine(v)
+        for id, set in pairs(sets) do
+            ls:AddLine(set.name or id, id)
         end
 
         if #ls:GetLines() > 0 then
@@ -92,15 +93,16 @@ local function buildModifyPanel(pan)
 
     function ls:OnRowRightClick(ind, line)
         local name = line:GetColumnText(1)
+        local id = line:GetColumnText(2)
         local acts = DermaMenu()
 
         acts:AddOption("Edit...", function()
-            RunConsoleCommand("weaponsets", name)
+            RunConsoleCommand("weaponsets", id)
         end):SetIcon("icon16/page_edit.png")
 
         acts:AddOption("Delete", function()
             deleteWeaponSetDialog(name, function()
-                RunConsoleCommand("weaponsets_delete", name)
+                RunConsoleCommand("weaponsets_delete", id)
                 ls:RemoveLine(ind)
 
                 if #ls:GetLines() > 0 then
@@ -113,14 +115,14 @@ local function buildModifyPanel(pan)
         local subMenu1, subMenu1Icon = acts:AddSubMenu("Give to...")
 
         playersListMenu(subMenu1, function(ply)
-            RunConsoleCommand("weaponsets_give", name, ply and ply:UserID())
+            RunConsoleCommand("weaponsets_give", id, ply and ply:UserID())
         end)
 
         subMenu1Icon:SetIcon("icon16/user_go.png")
         local subMenu2, subMenu2Icon = acts:AddSubMenu("Set as loadout for...")
 
         playersListMenu(subMenu2, function(ply)
-            RunConsoleCommand("weaponsets_setloadout", name, ply and ply:UserID())
+            RunConsoleCommand("weaponsets_setloadout", id, ply and ply:UserID())
         end)
 
         subMenu2Icon:SetIcon("icon16/user_go.png")
@@ -135,22 +137,23 @@ local function buildModifyPanel(pan)
         bt.DoClick = function()
             if #ls:GetLines() < 1 then return end
             local name = ls:GetSelected()[1]:GetColumnText(1)
+            local id = ls:GetSelected()[1]:GetColumnText(2)
             local ind = ls:GetSelectedLine()
-            func(name, ind)
+            func(id, name, ind)
         end
 
         return bt
     end
 
     -- Edit button
-    pan:AddItem(localBt("Edit selected weapon set", function(name)
-        RunConsoleCommand("weaponsets", name)
+    pan:AddItem(localBt("Edit selected weapon set", function(id)
+        RunConsoleCommand("weaponsets", id)
     end))
 
     -- Delete button
-    pan:AddItem(localBt("Delete selected weapon set", function(name, ind)
+    pan:AddItem(localBt("Delete selected weapon set", function(id, name, ind)
         deleteWeaponSetDialog(name, function()
-            RunConsoleCommand("weaponsets_delete", name)
+            RunConsoleCommand("weaponsets_delete", id)
             ls:RemoveLine(ind)
 
             if #ls:GetLines() > 0 then
@@ -160,15 +163,15 @@ local function buildModifyPanel(pan)
     end))
 
     -- Give buttons
-    pan:AddItem(localBt("Give selected set to...", function(name)
+    pan:AddItem(localBt("Give selected set to...", function(id)
         playersListMenu(DermaMenu(), function(ply)
-            RunConsoleCommand("weaponsets_give", name, ply and ply:UserID())
+            RunConsoleCommand("weaponsets_give", id, ply and ply:UserID())
         end):Open()
     end))
 
-    pan:AddItem(localBt("Set as loadout set for...", function(name)
+    pan:AddItem(localBt("Set as loadout set for...", function(id)
         playersListMenu(DermaMenu(), function(ply)
-            RunConsoleCommand("weaponsets_setloadout", name, ply and ply:UserID())
+            RunConsoleCommand("weaponsets_setloadout", id, ply and ply:UserID())
         end):Open()
     end))
 
@@ -187,29 +190,30 @@ local function buildModifyPanel(pan)
     createBt:Dock(RIGHT)
 
     createBt.DoClick = function()
+        -- TODO:
         RunConsoleCommand("weaponsets", newSetName:GetValue())
     end
 
     pan:AddItem(newSetPanel)
     pan.list = ls
-    WEAPONSETS.ModifyPanel = pan
+    WeaponSets.ModifyPanel = pan
 end
 
 -- Hooks
-hook.Add("PopulateToolMenu", "weaponsets_PopulateToolMenu", function()
+hook.Add("PopulateToolMenu", "WeaponSets", function()
     spawnmenu.AddToolMenuOption("Utilities", "WeaponSets", "WeaponSetsGiveMenu", "Players and giving", "weaponsets_give")
     spawnmenu.AddToolMenuOption("Utilities", "WeaponSets", "WeaponSetsModifyMenu", "Modify weapon sets", "", "", buildModifyPanel)
     spawnmenu.AddToolMenuOption("Utilities", "WeaponSets", "WeaponSetsSettingsMenu", "Settings...", "", "", buildSettingsPanel)
 end)
 
-hook.Add("AddToolMenuCategories", "weaponsets_AddToolMenuCategories", function()
+hook.Add("AddToolMenuCategories", "WeaponSets", function()
     spawnmenu.AddToolCategory("Utilities", "WeaponSets", "Weapon sets")
 end)
 
 --[[---------------------------------------------------------
     Sandbox desktop windows support
 -----------------------------------------------------------]]
-list.Set("DesktopWindows", "CLazWeaponSets", {
+list.Set("DesktopWindows", "WeaponSets", {
     title = "Weapon sets",
     icon = "icon64/tool.png",
     width = 0,
@@ -225,45 +229,51 @@ list.Set("DesktopWindows", "CLazWeaponSets", {
 
         popupMenu:AddSpacer()
 
-        for _, name in pairs(WEAPONSETS.WeaponSetsList) do
+        -- TODO: add <default> and <inherit> with only give and loadout options?
+
+        for id, set in pairs(WeaponSets.Sets) do
+            local name = set.name or id
+
             local subMenu, subMenuOption = popupMenu:AddSubMenu(name, function()
-                RunConsoleCommand("weaponsets_give", name, LocalPlayer():UserID())
+                RunConsoleCommand("weaponsets_give", id, LocalPlayer():UserID())
             end)
 
             subMenuOption.DoRightClick = function(_, keyCode)
-                RunConsoleCommand("weaponsets", name)
+                RunConsoleCommand("weaponsets", id)
             end
 
             subMenu:AddOption("Edit...", function()
-                RunConsoleCommand("weaponsets", name)
+                RunConsoleCommand("weaponsets", id)
             end):SetIcon("icon16/page_edit.png")
 
             subMenu:AddOption("Delete", function()
                 deleteWeaponSetDialog(name, function()
-                    RunConsoleCommand("weaponsets_delete", name)
+                    RunConsoleCommand("weaponsets_delete", id)
                 end)
             end):SetIcon("icon16/cross.png")
 
             subMenu:AddSpacer()
 
             subMenu:AddOption("Give to all", function()
-                RunConsoleCommand("weaponsets_give", name)
+                RunConsoleCommand("weaponsets_give", id)
             end):SetIcon("icon16/group_go.png")
 
             subMenu:AddOption("Give to me", function()
-                RunConsoleCommand("weaponsets_give", name, LocalPlayer():UserID())
+                RunConsoleCommand("weaponsets_give", id, LocalPlayer():UserID())
             end):SetIcon("icon16/user_go.png")
 
             subMenu:AddSpacer()
 
+            -- TODO: add loadout selection option for non-admins?
             subMenu:AddOption("Set as my loadout", function()
-                RunConsoleCommand("weaponsets_setloadout", name, LocalPlayer():UserID())
+                RunConsoleCommand("weaponsets_setloadout", id, LocalPlayer():UserID())
             end)
         end
 
         popupMenu:AddSpacer()
 
         popupMenu:AddOption("Add new weapon set...", function()
+            -- TODO:
             Derma_StringRequest("New weapon set creation", "Enter new weapon set name:", "newset", function(name)
                 RunConsoleCommand("weaponsets", name)
             end, nil, "OK", "Cancel")
@@ -300,14 +310,15 @@ properties.Add("weaponsets_give_property", {
         pan:DockMargin(pad * 2, pad * 2, pad * 2, pad)
         pan:Dock(FILL)
 
-        for _, name in pairs(WEAPONSETS.WeaponSetsList) do
+        for id, set in pairs(WeaponSets.Sets) do
+            local name = set.name or id
             local bt = vgui.Create("DButton")
             bt:DockMargin(0, 0, 0, pad)
             bt:Dock(TOP)
             bt:SetText(name)
 
             bt.DoClick = function()
-                RunConsoleCommand("weaponsets_give", name, ent:UserID())
+                RunConsoleCommand("weaponsets_give", id, ent:UserID())
                 f:Close()
             end
 

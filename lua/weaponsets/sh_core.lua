@@ -1,3 +1,7 @@
+WeaponSets.Options = {}
+WeaponSets._optionsOrder = {}
+
+--[[ Debug logging ]]
 if WeaponSets.Debug then
     function WeaponSets.D(...)
         print( "[WeaponSets] D", ...)
@@ -5,13 +9,13 @@ if WeaponSets.Debug then
 else
     function WeaponSets.D() end
 end
+
+--- Prints values to console with "[WeaponSets]" prefix
 function WeaponSets.Print(...)
     print("[WeaponSets]", ...)
 end
 
-WeaponSets.Options = {}
-WeaponSets._optionsOrder = {}
-
+--- Adds an option and returns its order
 function WeaponSets:AddOption(key, tbl)
     if (self.Options[key] ~= nil) then
         table.RemoveByValue(WeaponSets._optionsOrder, key)
@@ -21,23 +25,24 @@ function WeaponSets:AddOption(key, tbl)
     return table.insert(self._optionsOrder, key)
 end
 
---[[--
-    Validates given weaponset values
-]]
+--- Validates given weaponset values
+-- @return are given weaponset values valid
+-- @return first invalid option key, or nil
+-- @return error text, or nil
 -- TODO: think about validation messages localization and with parameters?
-function WeaponSets:Validate(set)
-    if not istable(set) then
+function WeaponSets:Validate(values)
+    if not istable(values) then
         return false
     end
     -- FIXME: ??? add order property to SetOption and use SortedPairsByMemberValue instead this?
     for _, key in ipairs(self._optionsOrder) do
-        local value = set[key]
+        local value = values[key]
         if value == nil then
             continue
         end
         local option = self.Options[key]
         if isfunction(option.validate) then
-            local valid, err = option.validate(value, option, set)
+            local valid, err = option.validate(value, option, values)
             if not valid then
                 self.D("Validate FAIL at key: ", key, value, err)
                 return false, key, err
@@ -45,6 +50,29 @@ function WeaponSets:Validate(set)
         end
     end
     return true
+end
+
+--- Sanitezes (cleans, normalizes) given weaponset values and returns valid table
+function WeaponSets:Sanitize(values)
+    if not istable(values) then
+        return {}
+    end
+
+    local newValues = {}
+    for _, key in ipairs(self._optionsOrder) do
+        local value = values[key]
+        if value == nil then
+            continue
+        end
+        local option = self.Options[key]
+        if isfunction(option.sanitize) then
+            newValues[key] = option.sanitize(value, option, values)
+        else
+            newValues[key] = value
+        end
+    end
+
+    return newValues
 end
 
 -- TODO: complete sanitize and make validation more strict
@@ -62,7 +90,7 @@ end
     validate = function(value, option, set) end,
     sanitize = function(value, option, set) end,
     equip = function(ply, value, midGame, set, option) end,
-    strip = function(ply, value, set, option) end,
+    strip = function(ply, value, midGame, set, option) end,
     getFromPlayer = function(ply) end
 }) ]]
 
@@ -93,14 +121,18 @@ WeaponSets:AddOption("stripammo", {
     end
 })
 WeaponSets:AddOption("infiniteammo", {
-    default = false,
-    entryType = "bool",
+    default = 0,
     category = "weapons",
-    validate = isbool,
-    sanitize = tobool,
+    entryType = "combobox",
+    values = { 0, 1, 2, 3 },
+    validate = function(x)
+        return isnumber(x) and math.floor(x) == x and x >= 0 and x <= 3
+    end,
+    sanitize = function(x)
+        return math.Clamp(math.Round(tonumber(x) or 0), 0, 3)
+    end,
     equip = function(ply, value)
         ply.wsInfiniteAmmo = value
-        -- TODO: implement infinite ammo
     end,
     strip = function(ply)
         ply.wsInfiniteAmmo = nil
@@ -115,7 +147,10 @@ WeaponSets:AddOption("givewithoutammo", {
     category = "weapons",
     validate = isbool,
     sanitize = tobool,
-    equip = function() end
+    equip = function() end,
+    getFromPlayer = function(ply)
+        return true
+    end
 })
 WeaponSets:AddOption("dropweapons", {
     default = false,
@@ -134,11 +169,11 @@ WeaponSets:AddOption("set", {
     default = {},
     validate = function(value)
         if not istable(value) then
-            return false, "not table"
+            return false, "not_table"
         end
         for name, count in pairs(value) do
             if not isstring(name) or not isnumber(count) then
-                return false, "wrong keyvalues"
+                return false, "wrong_keyvalues"
             end
             -- check ammo?
         end
@@ -269,7 +304,20 @@ local function isColor(x)
     return IsColor(x) or (isColPart(x.r) and isColPart(x.g) and isColPart(x.b) and isColPart(x.a))
 end
 local function toColor(x)
-    return istable(x) and Color(x.r, x.red, x.g or x.green, x.b or x.blue, x.a or x.aplha or 255) or nil
+    if istable(x) then
+        return Color(
+            x.r or x.red or x.R,
+            x.g or x.green or x.G,
+            x.b or x.blue or x.B,
+            x.a or x.aplha or x.A or 255
+        )
+    end
+
+    if isstring(x) then
+        return string.ToColor(x)
+    end
+
+    return nil
 end
 WeaponSets:AddOption("color", {
     default = Color(255, 255, 255, 255),
@@ -395,7 +443,7 @@ WeaponSets:AddOption("jump", {
     equip = function(ply, value)
         ply:SetJumpPower(value)
     end,
-    strip = function(ply, value)
+    strip = function(ply)
         ply:SetJumpPower(200)
     end,
     getFromPlayer = function(ply)
@@ -413,7 +461,7 @@ WeaponSets:AddOption("stepsize", {
     equip = function(ply, value)
         ply:SetStepSize(value)
     end,
-    strip = function(ply, value)
+    strip = function(ply)
         ply:SetStepSize(18)
     end,
     getFromPlayer = function(ply)
@@ -431,7 +479,7 @@ WeaponSets:AddOption("gravity", {
     equip = function(ply, value)
         ply:SetGravity(value)
     end,
-    strip = function(ply, value)
+    strip = function(ply)
         ply:SetGravity(1.0)
     end,
     getFromPlayer = function(ply)
@@ -451,7 +499,7 @@ WeaponSets:AddOption("mass", {
             phys:SetMass(value)
         end
     end,
-    strip = function(ply, value)
+    strip = function(ply)
         local phys = ply:GetPhysicsObject()
         if IsValid(phys) then
             phys:SetMass(85)
@@ -474,7 +522,7 @@ WeaponSets:AddOption("friction", {
         ply:SetFriction(value)
         -- TODO: try MOVETYPE_STEP
     end,
-    strip = function(ply, value)
+    strip = function(ply)
         ply:SetFriction(1.0)
     end,
     getFromPlayer = function(ply)
@@ -492,7 +540,7 @@ WeaponSets:AddOption("timescale", {
     equip = function(ply, value)
         ply:SetLaggedMovementValue(value)
     end,
-    strip = function(ply, value)
+    strip = function(ply)
         ply:SetLaggedMovementValue(1)
     end,
     getFromPlayer = function(ply)
@@ -603,7 +651,7 @@ WeaponSets:AddOption("allowflashlight", {
             ply:Flashlight(false)
         end
     end,
-    strip = function(ply, value)
+    strip = function(ply)
         ply:AllowFlashlight(true)
     end,
     getFromPlayer = function(ply)
@@ -621,7 +669,7 @@ WeaponSets:AddOption("allowzoom", {
             ply:StopZooming()
         end
     end,
-    strip = function(ply, value)
+    strip = function(ply)
         ply:SetCanZoom(true)
     end,
     getFromPlayer = function(ply)
@@ -638,7 +686,7 @@ WeaponSets:AddOption("fov", {
     equip = function(ply, value)
         ply:SetFOV(value, 1.0)
     end,
-    strip = function(ply, value)
+    strip = function(ply)
         ply:SetFOV(0, 1.0)
     end,
     getFromPlayer = function(ply)
@@ -678,7 +726,7 @@ WeaponSets:AddOption("health", {
     equip = function(ply, value)
         ply:SetHealth(value)
     end,
-    strip = function(ply, value)
+    strip = function(ply)
         ply:SetHealth(100)
     end,
     getFromPlayer = function(ply)
@@ -695,7 +743,7 @@ WeaponSets:AddOption("maxhealth", {
     equip = function(ply, value)
         ply:SetHealth(value)
     end,
-    strip = function(ply, value)
+    strip = function(ply)
         ply:SetHealth(100)
     end,
     getFromPlayer = function(ply)
@@ -712,7 +760,7 @@ WeaponSets:AddOption("armor", {
     equip = function(ply, value)
         ply:SetArmor(value)
     end,
-    strip = function(ply, value)
+    strip = function(ply)
         ply:SetArmor(0)
     end,
     getFromPlayer = function(ply)
