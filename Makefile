@@ -1,5 +1,7 @@
 .PHONY : clean pack publish
 
+# Usage: make publish changes="Changes message"
+
 GMOD_BIN = ~/.steam/steam/steamapps/common/GarrysMod/bin
 ADDON_NAME = weaponsets
 WORKSHOP_ID = 523399678
