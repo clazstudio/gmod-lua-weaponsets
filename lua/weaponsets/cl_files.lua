@@ -8,29 +8,34 @@ WeaponSets.Net[WeaponSets.Net.SendSets] = function (len)
     WeaponSets.Sets = sets or {}
 
     WeaponSets.D("Recieved sets: ")
-    PrintTable(WeaponSets.Sets)
+    WeaponSets.D(WeaponSets.Sets)
 end
 
 WeaponSets.Net[WeaponSets.Net.SendSet] = function (len)
+    local setId = net.ReadString()
     local values = WeaponSets:NetReadTable()
 
-    WeaponSets.D("SET", net.ReadString())
-    PrintTable(values or {})
+    WeaponSets.D("SET", setId)
+    WeaponSets:OpenEditWindow(setId, values)
 end
 
 WeaponSets.Net[WeaponSets.Net.Response] = function (len)
     WeaponSets.D("RESPONSE", len)
 end
 
-concommand.Add("weaponsets_retrieve", function (_, _, args)
-    if #args == 0 then
-        WeaponSets:StartNet(WeaponSets.Net.RetrieveSets)
-        net.SendToServer()
-    else
-        WeaponSets:StartNet(WeaponSets.Net.RetrieveSet)
-        net.WriteString(args[1])
-        net.SendToServer()
-    end
+-- Console commands --
+
+concommand.Add("weaponsets_weapons", function ()
+    PrintTable(WeaponSets:WeaponsTable())
+end)
+
+concommand.Add("weaponsets_ammo", function ()
+    PrintTable(WeaponSets:AmmoTable())
+end)
+
+concommand.Add("weaponsets_retrieve", function ()
+    WeaponSets:StartNet(WeaponSets.Net.RetrieveSets)
+    net.SendToServer()
 end)
 
 local function autoComplete(cmd, args)
@@ -54,6 +59,6 @@ concommand.Add("weaponsets", function(ply, _, args)
         net.WriteString(args[1])
         net.SendToServer()
     else
-        -- TODO: open main GUI
+        WeaponSets:OpenMainWindow()
     end
 end, autoComplete, "Usage: weaponsets [<weaponSetId>]", flags)

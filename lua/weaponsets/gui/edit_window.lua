@@ -1,13 +1,22 @@
 local FILL_MODE_ALL = 1
 local FILL_MODE_ADDED = 2
 local FILL_MODE_NOT_ADDED = 3
-local WEP_PANEL_COLOR_IN = Color(200, 230, 201)
-local WEP_PANEL_COLOR_OUT = Color(255, 205, 210)
 
---[[---------------------------------------------------------
-    GUI - Weapon sets edit window
------------------------------------------------------------]]
-function WEAPONSETS:OpenEditMenu(name, tbl)
+local editWindow = nil
+
+function WeaponSets:OpenEditWindow(setId, values)
+    self.D("OpenEditWindow", setId)
+    self.D(values)
+
+    -- if not IsValid(editWindow) then
+
+    -- end
+
+    -- editWindow:MakePopup()
+end
+
+
+--[[ function WEAPONSETS:OpenEditMenu(name, tbl)
     name, tbl = self:ValidateWeaponSet(name, tbl)
     local pad = 2 -- = padding/2 = margin/2
     local wepList = {}
@@ -39,7 +48,6 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
         end
     end
 
-    ----------------[[ MAIN FRAME ]]----------------
     local f = vgui.Create("DFrame")
     f:SetSize(500, 400)
     f:SetMinWidth(400)
@@ -74,7 +82,6 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
     sheet:DockPadding(pad, pad, pad, pad)
     sheet:Dock(FILL)
 
-    ----------------[[ WEAPONS LIST PANEL ]]----------------
     local wepListPan = vgui.Create("DPanel", sheet)
     wepListPan:SetPaintBackground(false)
     sheet:AddSheet("Weapons", wepListPan, "icon16/text_list_bullets.png")
@@ -184,7 +191,6 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
 
     fillWepScroll(FILL_MODE_ALL)
 
-    ----------------[[ AMMOES LIST PANEL ]]----------------
     local ammoListPan = vgui.Create("DPanel", sheet)
     ammoListPan:SetPaintBackground(false)
     sheet:AddSheet("Ammoes", ammoListPan, "icon16/box.png")
@@ -234,7 +240,6 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
         end, nil, "Ok", "Cancel")
     end
 
-    ----------------[[ PLAYER SETTINGS PANEL ]]----------------
     local plySetPan = vgui.Create("DPanel", sheet)
     plySetPan:SetPaintBackground(false)
     sheet:AddSheet("Player settings", plySetPan, "icon16/user_edit.png")
@@ -363,7 +368,6 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
         tbl.blood = data
     end
 
-    ----------------[[ SAVE BUTTON ]]----------------
     local bt4 = vgui.Create("DButton", f)
     bt4:SetText("Save and exit")
     bt4:Dock(BOTTOM)
@@ -398,4 +402,4 @@ function WEAPONSETS:OpenEditMenu(name, tbl)
     end
 
     return f
-end
+end ]]

@@ -3,8 +3,12 @@ WeaponSets._optionsOrder = {}
 
 --[[ Debug logging ]]
 if WeaponSets.Debug then
-    function WeaponSets.D(...)
-        print( "[WeaponSets] D", ...)
+    function WeaponSets.D(x, ...)
+        if istable(x) then
+            PrintTable(x)
+        else
+            print("[WeaponSets] D", x, ...)
+        end
     end
 else
     function WeaponSets.D() end
@@ -30,6 +34,7 @@ end
 -- @return first invalid option key, or nil
 -- @return error text, or nil
 -- TODO: think about validation messages localization and with parameters?
+-- TODO: pass custom options and order?
 function WeaponSets:Validate(values)
     if not istable(values) then
         return false
@@ -93,6 +98,60 @@ end
     strip = function(ply, value, midGame, set, option) end,
     getFromPlayer = function(ply) end
 }) ]]
+
+local function isColPart(col)
+    return isnumber(col) and col >= 0 and col <= 255
+end
+local function isColor(x)
+    return IsColor(x) or (isColPart(x.r) and isColPart(x.g) and isColPart(x.b) and isColPart(x.a))
+end
+local function toColor(x)
+    if istable(x) then
+        return Color(
+            x.r or x.red or x.R,
+            x.g or x.green or x.G,
+            x.b or x.blue or x.B,
+            x.a or x.aplha or x.A or 255
+        )
+    end
+
+    if isstring(x) then
+        return string.ToColor(x)
+    end
+
+    return nil
+end
+
+local function isNumberMinMax(x, option)
+    if not isnumber(x) then
+        return false, "not_number"
+    end
+    if option.min and x < option.min then
+        return false, "number_min"
+    end
+    if option.max and x > option.max then
+        return false, "number_max"
+    end
+    return true
+end
+
+local function toNumber(x, option)
+    return tonumber(x, option.base)
+end
+
+local function toClampedNumber(x, option)
+    local num = tonumber(x, option.base)
+    if num == nil then
+        return nil
+    end
+    if option.min then
+        num = math.max(num, option.min)
+    end
+    if option.max then
+        num = math.min(num, option.max)
+    end
+    return num
+end
 
 -- Weapons category --
 
@@ -163,6 +222,19 @@ WeaponSets:AddOption("dropweapons", {
     end,
     getFromPlayer = function(ply)
         return ply.DropWeaponOnDie
+    end
+})
+WeaponSets:AddOption("weaponsinvehicle", {
+    default = false,
+    entryType = "bool",
+    category = "weapons",
+    validate = isbool,
+    sanitize = tobool,
+    equip = function(ply, value)
+        ply:SetAllowWeaponsInVehicle(value)
+    end,
+    getFromPlayer = function(ply)
+        return ply:GetAllowWeaponsInVehicle()
     end
 })
 WeaponSets:AddOption("set", {
@@ -297,28 +369,6 @@ WeaponSets:AddOption("material", {
         return ply:GetMaterial()
     end
 })
-local function isColPart(col)
-    return isnumber(col) and col >= 0 and col <= 255
-end
-local function isColor(x)
-    return IsColor(x) or (isColPart(x.r) and isColPart(x.g) and isColPart(x.b) and isColPart(x.a))
-end
-local function toColor(x)
-    if istable(x) then
-        return Color(
-            x.r or x.red or x.R,
-            x.g or x.green or x.G,
-            x.b or x.blue or x.B,
-            x.a or x.aplha or x.A or 255
-        )
-    end
-
-    if isstring(x) then
-        return string.ToColor(x)
-    end
-
-    return nil
-end
 WeaponSets:AddOption("color", {
     default = Color(255, 255, 255, 255),
     entryType = "color",
@@ -439,7 +489,7 @@ WeaponSets:AddOption("jump", {
     min = 0,
     max = 1000,
     validate = isnumber,
-    sanitize = tonumber,
+    sanitize = toNumber,
     equip = function(ply, value)
         ply:SetJumpPower(value)
     end,
@@ -457,7 +507,7 @@ WeaponSets:AddOption("stepsize", {
     min = 0,
     max = 1000,
     validate = isnumber,
-    sanitize = tonumber,
+    sanitize = toNumber,
     equip = function(ply, value)
         ply:SetStepSize(value)
     end,
@@ -475,7 +525,7 @@ WeaponSets:AddOption("gravity", {
     min = -1.0,
     max = 10.0,
     validate = isnumber,
-    sanitize = tonumber,
+    sanitize = toNumber,
     equip = function(ply, value)
         ply:SetGravity(value)
     end,
@@ -493,6 +543,7 @@ WeaponSets:AddOption("mass", {
     min = 0.01,
     max = 1000,
     validate = isnumber,
+    sanitize = toNumber,
     equip = function(ply, value)
         local phys = ply:GetPhysicsObject()
         if IsValid(phys) then
@@ -514,10 +565,10 @@ WeaponSets:AddOption("friction", {
     default = 1.0,
     entryType = "number",
     category = "movement",
-    min = -1.0,
+    min = 0.0,
     max = 10.0,
-    validate = isnumber,
-    sanitize = tonumber,
+    validate = isNumberMinMax,
+    sanitize = toClampedNumber,
     equip = function(ply, value)
         ply:SetFriction(value)
         -- TODO: try MOVETYPE_STEP
@@ -536,7 +587,7 @@ WeaponSets:AddOption("timescale", {
     min = 0.01,
     max = 1000,
     validate = isnumber,
-    sanitize = tonumber,
+    sanitize = toNumber,
     equip = function(ply, value)
         ply:SetLaggedMovementValue(value)
     end,
@@ -547,7 +598,38 @@ WeaponSets:AddOption("timescale", {
         return ply:GetLaggedMovementValue()
     end
 })
-WeaponSets:AddOption("enablewalk", {
+local MAX_SPEED = 1000000
+WeaponSets:AddOption("speed", {
+    default = 200,
+    entryType = "number",
+    category = "movement",
+    min = 1,
+    max = MAX_SPEED,
+    validate = isnumber,
+    sanitize = toNumber,
+    equip = function(ply, value)
+        ply:SetWalkSpeed(value)
+    end,
+    getFromPlayer = function(ply)
+        return ply:GetWalkSpeed()
+    end
+})
+WeaponSets:AddOption("runspeed", {
+    default = 300,
+    entryType = "number",
+    category = "movement",
+    min = 1,
+    max = MAX_SPEED,
+    validate = isnumber,
+    sanitize = toNumber,
+    equip = function(ply, value)
+        ply:SetRunSpeed(value)
+    end,
+    getFromPlayer = function(ply)
+        return ply:GetRunSpeed()
+    end
+})
+--[[ WeaponSets:AddOption("enablewalk", {
     default = true,
     entryType = "bool",
     category = "movement",
@@ -559,35 +641,35 @@ WeaponSets:AddOption("enablewalk", {
     getFromPlayer = function(ply)
         return ply:GetCanWalk()
     end
-})
-WeaponSets:AddOption("normalspeed", {
-    default = 1.0,
+}) ]]
+WeaponSets:AddOption("walkspeed", {
+    default = 100,
     entryType = "number",
     category = "movement",
     min = 1,
-    max = 1000000,
+    max = MAX_SPEED,
     validate = isnumber,
-    sanitize = tonumber,
+    sanitize = toNumber,
     equip = function(ply, value)
-        ply:SetWalkSpeed(value)
+        ply:SetSlowWalkSpeed(value)
     end,
     getFromPlayer = function(ply)
-        return ply:GetWalkSpeed()
+        return ply:GetSlowWalkSpeed()
     end
 })
-WeaponSets:AddOption("runspeed", {
-    default = 1.0,
+WeaponSets:AddOption("climbspeed", {
+    default = 200,
     entryType = "number",
     category = "movement",
     min = 1,
-    max = 1000000,
+    max = MAX_SPEED,
     validate = isnumber,
-    sanitize = tonumber,
+    sanitize = toNumber,
     equip = function(ply, value)
-        ply:SetRunSpeed(value)
+        ply:SetLadderClimbSpeed(value)
     end,
     getFromPlayer = function(ply)
-        return ply:GetRunSpeed()
+        return ply:GetLadderClimbSpeed()
     end
 })
 WeaponSets:AddOption("crouchspeed", {
@@ -596,8 +678,8 @@ WeaponSets:AddOption("crouchspeed", {
     category = "movement",
     min = 0,
     max = 1,
-    validate = isnumber,
-    sanitize = tonumber,
+    validate = isNumberMinMax,
+    sanitize = toClampedNumber,
     equip = function(ply, value)
         ply:SetCrouchedWalkSpeed(value)
     end,
@@ -606,13 +688,13 @@ WeaponSets:AddOption("crouchspeed", {
     end
 })
 WeaponSets:AddOption("duckspeed", {
-    default = 0.3,
+    default = 0.1,
     entryType = "number",
     category = "movement",
     min = 0,
     max = 1,
-    validate = isnumber,
-    sanitize = tonumber,
+    validate = isNumberMinMax,
+    sanitize = toClampedNumber,
     equip = function(ply, value)
         ply:SetDuckSpeed(value)
     end,
@@ -621,13 +703,13 @@ WeaponSets:AddOption("duckspeed", {
     end
 })
 WeaponSets:AddOption("unduckspeed", {
-    default = 0.3,
+    default = 0.1,
     entryType = "number",
     category = "movement",
     min = 0,
     max = 1,
-    validate = isnumber,
-    sanitize = tonumber,
+    validate = isNumberMinMax,
+    sanitize = toClampedNumber,
     equip = function(ply, value)
         ply:SetUnDuckSpeed(value)
     end,
@@ -681,8 +763,8 @@ WeaponSets:AddOption("fov", {
     entryType = "number",
     min = 0,
     max = 360,
-    validate = isnumber,
-    sanitize = tonumber,
+    validate = isNumberMinMax,
+    sanitize = toClampedNumber,
     equip = function(ply, value)
         ply:SetFOV(value, 1.0)
     end,
@@ -693,6 +775,7 @@ WeaponSets:AddOption("fov", {
         return ply:GetFOV()
     end
 })
+-- TODO: move godmode to cheats category
 WeaponSets:AddOption("godmode", {
     default = false,
     entryType = "bool",
@@ -720,9 +803,9 @@ WeaponSets:AddOption("health", {
     default = 100,
     entryType = "number",
     min = 0,
-    max = 1000000,
-    validate = isnumber,
-    sanitize = tonumber,
+    max = 2147483647,
+    validate = isNumberMinMax,
+    sanitize = toClampedNumber,
     equip = function(ply, value)
         ply:SetHealth(value)
     end,
@@ -737,9 +820,9 @@ WeaponSets:AddOption("maxhealth", {
     default = 100,
     entryType = "number",
     min = 0,
-    max = 1000000,
-    validate = isnumber,
-    sanitize = tonumber,
+    max = 2147483647,
+    validate = isNumberMinMax,
+    sanitize = toClampedNumber,
     equip = function(ply, value)
         ply:SetHealth(value)
     end,
@@ -755,8 +838,8 @@ WeaponSets:AddOption("armor", {
     entryType = "number",
     min = 0,
     max = 255,
-    validate = isnumber,
-    sanitize = tonumber,
+    validate = isNumberMinMax,
+    sanitize = toClampedNumber,
     equip = function(ply, value)
         ply:SetArmor(value)
     end,
@@ -768,3 +851,4 @@ WeaponSets:AddOption("armor", {
     end
 })
 -- TODO: allow pickup: props, ammo, weapons
+-- TODO: allow noclip?

@@ -133,7 +133,7 @@ function WeaponSets:LoadSet(id)
     if values == nil and self.Sets[id] ~= nil then
         self.Print("Unregister invalid set file: " .. id)
         self.Sets[id] = nil
-        self:SendSets()
+        self:SendSets() -- FIXME: do not call this function here
     end
     if values ~= nil and self.Sets[id] == nil then
         id = self:IdFromName(id)
@@ -145,7 +145,7 @@ function WeaponSets:LoadSet(id)
         self:SendSets()
     end
 
-    if value ~= nil then
+    if values ~= nil then
         values = self:Sanitize(values)
     end
 
@@ -155,7 +155,10 @@ function WeaponSets:LoadSet(id)
 end
 
 function WeaponSets:SaveSet(id, values)
-    id = self:IdFromName(id)
+    if not self.Sets[id] then
+        return nil
+    end
+
     file.Write(filePath(id), util.TableToJSON(values, false))
     cachedSets[id] = values
     self.D("Save: " .. id)
@@ -182,13 +185,16 @@ end
 function WeaponSets:RenameSet(id, newName)
     if self.Sets[id] and self.Sets[id].name == newName then
         return id
+    elseif not self.Sets[id] then
+        return nil
     end
+
     local newId = self:IdFromName(newName)
     local ok = file.Rename(filePath(id), filePath(newId))
     self.D("Rename: " .. id .. " -> " .. newId, ok)
     if not ok then
         self.Print("Can't rename: " .. id .. " -> " .. newId)
-        return
+        return nil
     end
     self.Sets[newId] = self.Sets[id]
     self.Sets[id] = nil
@@ -200,6 +206,10 @@ end
 function WeaponSets:DuplicateSet(id, copyName)
     local values = self.LoadSet(id)
     local newId = self:IdFromName(copyName)
+    if not istable(values) then
+        return nil
+    end
+
     self.SaveSet(newId, values)
     self.D("Duplicate: " .. id .. " -> " .. newId)
     self.Sets[newId] = self.Sets[newId]

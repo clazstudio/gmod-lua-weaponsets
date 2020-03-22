@@ -1,7 +1,16 @@
---[[---------------------------------------------------------
-    GUI - Weapon sets give and loadout management window
------------------------------------------------------------]]
-function WEAPONSETS:OpenGiveMenu(tbl, sets)
+local mainWindow = nil
+
+function WeaponSets:OpenMainWindow(sheet)
+    self.D("OpenMainWindow", sheet)
+    -- if not IsValid(mainWindow) then
+
+    -- end
+
+    -- mainWindow:MakePopup()
+end
+
+
+--[[ function WEAPONSETS:OpenGiveMenu(tbl, sets)
     local pad = 2
 
     -- Main frame
@@ -215,4 +224,4 @@ function WEAPONSETS:OpenGiveMenu(tbl, sets)
     end
 
     return f
-end
+end ]]

@@ -8,6 +8,13 @@
 - sandbox desktop 64x64 icon
 - youtube demo video
 - add to lang - sandbox, clientside convar and concommand help, gui 
+- gmod_maxammo 
+- noclip, movetype? rendergroup options
+- option for halo?
+- spawnpoint GM:PlayerSelectSpawn(pl, transiton) : Entity
+- death sound?
+- team
+- disallow suicide 
 
  Files
 -------

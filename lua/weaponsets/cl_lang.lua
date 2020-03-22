@@ -13,6 +13,7 @@ local supportedLangsStr = table.concat(langs_arr, ", ")
 WeaponSets.D("Languages: " .. supportedLangsStr)
 langs_arr = nil;
 
+local curLang
 local langConVar = CreateClientConVar("weaponsets_lang", "", true, false,
     "WeaponSets language. Set to \"\" to use gmod_language value")
 
