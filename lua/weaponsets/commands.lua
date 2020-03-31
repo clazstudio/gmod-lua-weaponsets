@@ -1,5 +1,13 @@
 local flags = FCVAR_CLIENTCMD_CAN_EXECUTE
 
+local getPlayerByUserID = Player
+if not isfunction(getPlayerByUserID) then
+    getPlayerByUserID = function()
+        return nil
+    end
+    ErrorNoHalt("[WeaponSets] Global Player() is not a function! Try to disable all other addons.")
+end
+
 --[[---------------------------------------------------------
     SERVER - commands.lua
 -----------------------------------------------------------]]
@@ -62,7 +70,7 @@ concommand.Add("weaponsets_give", function(ply, _, args, _)
             for i = 2, #args do
                 local id = tonumber(args[i])
                 if not id then continue end
-                local target = Player(id)
+                local target = getPlayerByUserID(id)
 
                 if IsValid(target) then
                     target:GiveWeaponSet(name)
@@ -96,7 +104,7 @@ concommand.Add("weaponsets_setloadout", function(ply, _, args, _)
                 if not id then
                     util.SetPData(args[i], "loadoutWeaponSet", name)
                 else
-                    local target = Player(id)
+                    local target = getPlayerByUserID(id)
 
                     if IsValid(target) then
                         target:SetWeaponSet(name)

@@ -28,6 +28,7 @@ end
 -- Apply player hull changes
 WEAPONSETS.NetFuncs.applyNewScale = function(data)
     if data.scale and isnumber(data.scale) then
+        if not isfunction(Player) then return end
         local ply = Player(data.ply)
         if not IsValid(ply) then return end
         local matrix = Matrix()
